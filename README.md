@@ -21,7 +21,7 @@ Open `http://localhost:3000`. The seeded team starts with CAD $1,000 of fake cas
 
 - Supplier catalogue and purchase-order flow
 - Passwordless signup and login with email verification codes
-- Team-code assignment during signup
+- Temporary team-code assignment during signup
 - Hashed one-time codes and HTTP-only sessions
 - File-backed SQLite database
 - Fake-cash reservation when an order is placed
@@ -30,15 +30,26 @@ Open `http://localhost:3000`. The seeded team starts with CAD $1,000 of fake cas
 - Ramp Sandbox draft creation and invoice attachment
 - Signed webhook inbox, background processing, and reconciliation
 - Idempotent inventory fulfillment
-- Facilitator order dashboard
+- Facilitator-only order dashboard
 
 ## Mock versus Ramp Sandbox
 
 `RAMP_MODE=mock` creates a local mock bill and displays a button that simulates a paid bill. No external service is called.
 
-`EMAIL_MODE=console` is the development mailer. Verification codes appear in the UI and server console only outside production. The seeded signup team code is `CROISSANT`. A real email provider must be connected before deployment.
+`EMAIL_MODE=console` is the development mailer. Verification codes appear in the UI and server console only outside production. The temporary development signup team code is `CROISSANT`. A real email provider must be connected before deployment.
 
-The current signup UI still uses a team code. The confirmed product direction is one facilitator-issued, revocable magic invitation link per attendee; login will continue using email plus a verification code. See [AGENTS.md](./AGENTS.md) for the invitation requirements.
+The current signup UI assigns a team with a code, but this is temporary prototype behavior. The production direction is Supabase Auth with email magic links: accounts are created independently, then join a bakery team through a future flow that is still to be decided. See [AGENTS.md](./AGENTS.md) for the current requirements.
+
+## Facilitator access
+
+The facilitator page and its data API require a signed-in account with the `FACILITATOR` role. After a facilitator has created an account, grant that role locally with:
+
+```bash
+npm run db:init
+npm run facilitator:grant -- facilitator@example.com
+```
+
+The role is stored in the event database. Repeat this only for trusted event staff.
 
 For the Sandbox adapter, configure `.env.local`:
 
@@ -88,12 +99,12 @@ The setup header authenticates verification challenges only, never business even
 
 An integration error keeps the order and its cash reservation; the storefront tells the participant not to reorder. Rejected or archived bills also retain their reservation pending facilitator review: automated cancellation/refunds are not implemented. Orders created by older versions without an integration snapshot need manual review. Do not delete orders or reset balances to recover a timeout.
 
-The facilitator console remains unprotected and is read-only. Recovery runs from the local CLI; no public admin mutation endpoints were added.
+The facilitator console requires a facilitator-role account and remains read-only. Recovery runs from the local CLI; no public admin mutation endpoints were added.
 
 ## Two-team Sandbox isolation test
 
 1. In the Sandbox UI, create Croissant Bakery and Sourdough Bakery entities. The public Business Entities API documents listing and reading entities, not creating them. If entity creation or entity restrictions are unavailable, ask Ramp to enable/provision the Sandbox features.
-2. Run `npm run db:init`, then `node scripts/map-ramp-teams.mjs <croissant-entity-uuid> <sourdough-entity-uuid>`. This verifies both entities through the Sandbox API and maps each to its own local team. Existing cash and orders are preserved. The second team's temporary local signup code is `SOURDOUGH`; invitation signup remains a separate planned change.
+2. Run `npm run db:init`, then `node scripts/map-ramp-teams.mjs <croissant-entity-uuid> <sourdough-entity-uuid>`. This verifies both entities through the Sandbox API and maps each to its own local team. Existing cash and orders are preserved. The second team's temporary local signup code is `SOURDOUGH`; the production team-membership flow is still to be decided.
 3. Invite two test attendees to Ramp, one per entity, using locations mapped to those entities. Give each an Employee base role and the required Accounts Payable permissions restricted to only their entity under Bill Pay settings. Do not use Admin/Owner accounts to test isolation. A bakery-app login does not create a Ramp login.
 4. Configure entity-specific approval routing and the supplier vendor's default contact/payment method. Set `RAMP_VENDOR_ID`, then enable `RAMP_MODE=sandbox` and restart the app.
 5. Place one small order as each bakery-app user. Confirm each resulting bill has the expected entity in Ramp. Review and submit the draft in Ramp, then verify the configured approval routing.

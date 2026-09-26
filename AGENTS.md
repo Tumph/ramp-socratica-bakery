@@ -39,7 +39,7 @@ npm run ramp:worker
 npm run ramp:reconcile
 ```
 
-The default local URL is `http://localhost:3000`. The seeded development team code is `CROISSANT`.
+The default local URL is `http://localhost:3000`. The temporary development team code is `CROISSANT`.
 
 ## Authentication today
 
@@ -51,18 +51,16 @@ The default local URL is `http://localhost:3000`. The seeded development team co
 - `EMAIL_MODE=console` is development-only: the code is shown in the local UI and server output. It must never reveal codes in production.
 - Orders and invoices derive team membership from the authenticated session. Never trust a team ID supplied by the browser.
 
-## Confirmed authentication direction
+## Target authentication and team membership
 
-Account creation will move from a reusable team code to a facilitator-issued magic invitation link for each attendee. Login will remain email plus a six-digit verification code. The current implementation still uses team codes until the invitation schema, mailer, and UI are built.
+The current team-code signup is temporary. The selected production direction is Supabase Auth with email magic links. Account creation and authentication are separate from bakery-team membership:
 
-A proposed invitation flow is:
+1. A participant creates an account through Supabase Auth using an email magic link.
+2. They join a bakery team only after account creation.
+3. The exact team-joining experience and policy are still to be decided; do not assume reusable team codes or per-person invitation links.
+4. Until it is replaced, the existing team-code flow is development-prototype behavior only.
 
-1. A facilitator creates an invitation for one email address and one team.
-2. The system emails a short-lived magic link to that address.
-3. Opening the link verifies the email, assigns the user to the intended team, consumes the invitation, and creates a session.
-4. Reusing, modifying, revoking, or opening an expired invitation must fail safely.
-
-Use an opaque cryptographically random invitation token stored only as a hash. It is simpler to invalidate than a JWT and must be short-lived, single-use, and revocable.
+Supabase Auth owns user identity and sessions. The application owns bakery membership and authorization: derive team membership server-side, deny orders from users without a team, and scope all participant data to the authenticated user's assigned team.
 
 ## Ramp integration notes
 
@@ -78,18 +76,17 @@ Use an opaque cryptographically random invitation token stored only as a hash. I
 
 1. Connect a real transactional email provider. Brevo is currently the leading option because its free tier permits 300 emails per day; Resend is the leading developer-experience alternative but has a 100-email daily free limit.
 2. Authenticate a dedicated sending subdomain owned by the event, such as `auth.example.com`, using the provider's SPF, DKIM, and DMARC instructions.
-3. Add a production mailer adapter while preserving the console adapter for local development.
-4. Replace team-code signup with per-user magic invitations and a production mailer.
-5. Protect the facilitator UI and APIs with an explicit facilitator/admin role.
-6. Provision Ramp entities, participant roles, and entity-restricted Bill Pay access; run the two-team isolation test before the event.
-7. Deploy a stable webhook endpoint and worker, then replace SQLite with hosted Postgres before deploying to Vercel.
+3. Integrate Supabase Auth with email magic links and configure production email delivery.
+4. Define and build the post-account-creation bakery-team membership flow.
+5. Provision Ramp entities, participant roles, and entity-restricted Bill Pay access; run the two-team isolation test before the event.
+6. Deploy a stable webhook endpoint and worker, then replace SQLite with hosted Postgres before deploying to Vercel.
 
 ## Security expectations
 
 - Never commit API keys, OAuth tokens, webhook secrets, email-provider credentials, or production session secrets.
 - Keep all provider credentials server-side in environment variables.
-- Verification codes and magic-link tokens must be short-lived, one-time, rate-limited, and stored only as hashes.
-- Use cryptographically secure randomness for codes, sessions, and invitations.
+- Authentication codes and tokens must be short-lived, one-time where applicable, rate-limited, and stored securely according to the chosen provider's guidance.
+- Use cryptographically secure randomness for application-managed tokens.
 - Keep authentication responses and logs free of verification codes in production.
 - Verify Ramp webhook signatures from the exact raw request bytes.
 - Make payment fulfillment idempotent; webhook retries must not duplicate inventory.

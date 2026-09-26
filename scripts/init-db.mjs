@@ -12,5 +12,11 @@ const sql = await fs.readFile(new URL("../sql/schema.sql", import.meta.url), "ut
 const database = new Database(databasePath);
 database.pragma("journal_mode = WAL");
 database.exec(sql);
+// CREATE TABLE IF NOT EXISTS does not add columns to databases made by an older
+// version of the prototype. Keep this migration idempotent for local event data.
+const userColumns = database.prepare("PRAGMA table_info(users)").all();
+if (!userColumns.some((column) => column.name === "role")) {
+  database.exec("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'PARTICIPANT'");
+}
 database.close();
 console.log(`Database initialized at ${databasePath}`);

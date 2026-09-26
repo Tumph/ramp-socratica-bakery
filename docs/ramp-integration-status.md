@@ -40,4 +40,4 @@ The storefront remains in mock mode. In demo.ramp.com, open Bill Pay drafts and 
 
 Use `npx tsx scripts/ramp-order.ts sync 67805416-d432-498d-9c09-546836410a09` to reconcile this order; do not place a replacement test order. Reconciliation can recover payment even when the webhook was missed.
 
-The event still needs a stable public endpoint, a continuously running worker, team permissions testing, facilitator authentication, and production email/invitation work. SQLite and the standalone development tunnel are local-prototype infrastructure.
+The event still needs a stable public endpoint, a continuously running worker, team permissions testing, production account provisioning, and a post-account-creation team-membership flow. Facilitator authentication is implemented. SQLite and the standalone development tunnel are local-prototype infrastructure.

@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "db:init": "node scripts/init-db.mjs",
+    "facilitator:grant": "node scripts/grant-facilitator.mjs",
     "test": "tsx --test tests/*.test.ts",
     "ramp:worker": "tsx scripts/ramp-worker.ts",
     "ramp:reconcile": "tsx scripts/ramp-order.ts reconcile",

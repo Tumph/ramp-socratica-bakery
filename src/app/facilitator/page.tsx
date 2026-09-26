@@ -1,9 +1,14 @@
 import { FacilitatorOrders, type FacilitatorOrder } from "@/components/FacilitatorOrders";
+import { redirect } from "next/navigation";
+import { getCurrentFacilitator } from "@/lib/auth";
 import { getDatabase } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export default function FacilitatorPage() {
+export default async function FacilitatorPage() {
+  const facilitator = await getCurrentFacilitator();
+  if (!facilitator) redirect("/");
+
   const orders = getDatabase().prepare(`
     SELECT o.id, o.invoice_number, o.status, o.total_cents, o.ramp_bill_id,
            o.ramp_status, o.error_message, o.created_at, t.name AS team_name

@@ -6,12 +6,15 @@ const SESSION_COOKIE = "bakery_session";
 const CODE_TTL_SECONDS = 10 * 60;
 const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
 
+export type UserRole = "PARTICIPANT" | "FACILITATOR";
+
 export type CurrentUser = {
   id: string;
   email: string;
   teamId: string;
   teamName: string;
   teamSlug: string;
+  role: UserRole;
 };
 
 function sha256(value: string) {
@@ -148,13 +151,18 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   if (!token) return null;
   const now = Math.floor(Date.now() / 1000);
   const user = getDatabase().prepare(`
-    SELECT u.id, u.email, u.team_id AS teamId, t.name AS teamName, t.slug AS teamSlug
+    SELECT u.id, u.email, u.team_id AS teamId, t.name AS teamName, t.slug AS teamSlug, u.role
     FROM sessions s
     JOIN users u ON u.id = s.user_id
     JOIN teams t ON t.id = u.team_id
     WHERE s.token_hash = ? AND s.expires_at > ?
   `).get(sha256(token), now) as CurrentUser | undefined;
   return user ?? null;
+}
+
+export async function getCurrentFacilitator(): Promise<CurrentUser | null> {
+  const user = await getCurrentUser();
+  return user?.role === "FACILITATOR" ? user : null;
 }
 
 export async function deleteCurrentSession() {
