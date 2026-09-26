@@ -2,9 +2,19 @@
 
 ## Document status
 
-- Status: Draft for discussion with Ramp and the event team
+- Status: Living product and operations proposal. The current implementation snapshot below is authoritative where it conflicts with aspirational workflow detail later in this document.
 - Product: Interactive bakery business simulation using Ramp Sandbox Bill Pay
 - Audience: Product, engineering, event operations, curriculum, and Ramp partner teams
+
+### Current implementation snapshot (September 2026)
+
+- Supabase Postgres and Supabase Auth replace the earlier local SQLite/prototype-auth plan.
+- Participants create accounts by magic link, create or accept an invite into one team, and cannot self-switch or leave teams.
+- Teams contain 3–6 participants. Team names and submission content are editable by any active member until the deadline; the latest saved version freezes automatically at the deadline.
+- Submissions support a title, tagline, write-up, typed project links, images, and a shareable immutable-ID project page.
+- The Admin console manages balances, membership, team merges/archiving/deletion, invitations, deadlines, Admin roles, and manual Ramp reconciliation. A Superadmin manages Admin roles.
+- Webhooks are stored durably and paid bills are verified against Ramp before fulfillment. There is no continuously running reconciliation worker on Vercel Hobby; an Admin triggers reconciliation when needed.
+- Resend SMTP is configured in Supabase, pending verification of the `auth.socratica.info` sending domain.
 
 ## 1. Summary
 
@@ -50,9 +60,9 @@ The experience should teach attendees:
 
 - Create each Ramp bill automatically from the supplier order.
 - Reliably associate each event order with its Ramp bill.
-- React automatically to Ramp's `bills.paid` webhook.
+- Persist and verify Ramp webhook signals, with manual Admin reconciliation as the current missed-event fallback.
 - Prevent duplicate fulfillment when Ramp retries a webhook.
-- Give facilitators enough visibility to unblock teams during the event.
+- Give Admins enough visibility and safe controls to unblock teams during the event.
 - Preserve an audit trail for demonstrations and post-event analysis.
 
 ## 4. Non-goals
@@ -70,7 +80,7 @@ The experience should teach attendees:
 1. The business story should make sense without explaining the software architecture.
 2. Important actions should happen in Ramp, not in a fake copy of Ramp.
 3. The event application should automate setup and reconciliation around Ramp.
-4. Every state should be recoverable by a facilitator.
+4. Every state should be recoverable by an Admin.
 5. Teams should never be blocked indefinitely by a delayed webhook or an accidental browser refresh.
 
 ## 6. Users and roles
@@ -88,8 +98,8 @@ Participants should rotate roles during the session so everyone interacts with R
 
 ### Event roles
 
-- Facilitator: Sees every team's progress, retries integrations, and resolves incorrect or stuck bills.
-- Event administrator: Configures teams, Ramp Sandbox businesses, vendors, approval rules, and webhook subscriptions.
+- Admin: Sees event operations; manages team balance, membership, invitation, merging, archival, deadline, and reconciliation controls.
+- Superadmin: Has all Admin permissions and can promote, demote, or remove Admins while preserving at least one Superadmin.
 - Simulated supplier: The event system that creates orders, invoices, and bills, then fulfills paid orders.
 
 ### Sandbox payment permission
@@ -97,7 +107,7 @@ Participants should rotate roles during the session so everyone interacts with R
 Ramp's documented Sandbox Demo Action for marking a bill paid requires an Admin or Business Owner role, or the AP Clerk permission. The event team must decide whether:
 
 - one participant per team receives that permission; or
-- a facilitator performs the final payment simulation after the team approves and schedules the bill.
+- an Admin performs the final payment simulation after the team approves and schedules the bill.
 
 The first option is more hands-on. The second has tighter operational control.
 
@@ -105,10 +115,10 @@ The first option is more hands-on. The second has tighter operational control.
 
 ### Phase A: Set up the bakery
 
-1. Participants join a team.
-2. Each team receives a bakery name and an initial fake cash balance in the event application.
+1. Participants create a team or accept a team invite link after authenticating.
+2. Each team has a self-managed bakery name; an Admin sets its initial fake cash balance.
 3. Participants sign in to the correct Ramp Sandbox business.
-4. The facilitator explains the team roles and approval rules.
+4. An Admin explains the team roles and approval rules.
 
 ### Phase B: Order supplies
 
@@ -137,12 +147,12 @@ The first option is more hands-on. The second has tighter operational control.
 1. Ramp routes the bill according to the configured approval policy.
 2. The appropriate participant approves or rejects it.
 3. An approved bill is scheduled or otherwise made eligible for payment according to the Sandbox configuration.
-4. An authorized participant or facilitator uses the Sandbox Demo Action to mark the current bill paid.
+4. An authorized participant or Admin uses the Sandbox Demo Action to mark the current bill paid.
 5. Ramp emits a `bills.paid` webhook.
 
 ### Phase E: Fulfill the order
 
-1. The event backend receives and verifies the webhook.
+1. The event backend records the signed webhook and an Admin reconciliation pass fetches and verifies the authoritative bill.
 2. It finds the event order associated with the Ramp bill.
 3. It fetches the latest bill from Ramp if additional confirmation is needed.
 4. It marks the order paid exactly once.
@@ -215,7 +225,7 @@ The first option is more hands-on. The second has tighter operational control.
                               |          |
                               |          +-----------> Invoice PDF store
                               |
-                              +----------------------> Facilitator console
+                              +----------------------> Admin console
 ```
 
 ### Responsibilities
@@ -251,12 +261,11 @@ The first option is more hands-on. The second has tighter operational control.
 - Emits business-event webhooks.
 - Remains the source of truth for bill status.
 
-#### Facilitator console
+#### Admin console
 
-- Shows stuck orders and their corresponding Ramp bills.
-- Allows safe retries of bill creation, attachment upload, and status refresh.
-- Allows manual fulfillment only with an audit reason.
-- Never fabricates a Ramp payment state.
+- Shows recent orders and supports verified Ramp reconciliation.
+- Manages team balance, membership, invitations, merges, archiving/deletion, deadlines, and Admin roles.
+- Never fabricates a Ramp payment state or manually fulfills an unverified bill.
 
 ## 10. Team isolation model
 
@@ -387,7 +396,7 @@ The webhook handler should:
 8. Fetch the bill from Ramp when confirmation or additional fields are needed.
 9. Mark the order paid exactly once.
 10. Deduct fake cash and add inventory in one database transaction.
-11. Record the result for facilitator support and auditing.
+11. Record the result for Admin support and auditing.
 
 ### Webhook retry behavior
 
@@ -395,9 +404,9 @@ Ramp may retry failed webhook deliveries. The same event ID is reused across ret
 
 ### Reconciliation fallback
 
-A periodic reconciliation job should inspect orders stuck in `PAYMENT_PENDING` or `AWAITING_RAMP_REVIEW`, fetch the associated bill from Ramp, and repair missed state transitions.
+A future periodic reconciliation job may inspect orders stuck in `PAYMENT_PENDING` or `AWAITING_RAMP_REVIEW`, fetch the associated bill from Ramp, and repair missed state transitions. Until then, an Admin triggers the same reconciliation on demand.
 
-This job protects the event from temporary webhook, network, or deployment failures.
+Until an automated job is justified, the Admin console runs reconciliation on demand to protect the event from temporary webhook, network, or deployment failures.
 
 ## 13. Approval scenarios
 
@@ -464,14 +473,12 @@ This prevents a team from placing unlimited orders while several invoices await 
 - The system receives `bills.approved`, `bills.rejected`, and `bills.paid` events where useful.
 - Only `bills.paid` or reconciliation against an actually paid bill triggers fulfillment.
 
-### Facilitator tools
+### Admin tools
 
-- Search by team, order number, invoice number, or Ramp bill ID.
-- View the latest event and error for an order.
-- Retry safe integration operations.
-- Refresh bill status from Ramp.
-- Manually fulfill only with confirmation and an audit note.
-- Display which participant or facilitator must take the next action.
+- View recent orders and reconcile unfinished orders against Ramp.
+- Manage team balance, membership, invitations, merging, archive/delete, and deadline controls.
+- Manage Admin roles as a Superadmin.
+- Display which participant or Admin must take the next action.
 
 ## 16. Security and privacy
 
@@ -496,7 +503,7 @@ Keep the order in `BILL_CREATING` or `INTEGRATION_ERROR`. Retry the attachment w
 
 ### Webhook is delayed or lost
 
-Show `Waiting for Ramp confirmation`, then use the reconciliation job or facilitator refresh to fetch current bill state.
+Show `Waiting for Ramp confirmation`, then use the Admin reconciliation action to fetch current bill state.
 
 ### Webhook arrives twice
 
@@ -508,11 +515,11 @@ Release the fake-cash reservation, mark the order rejected, and allow the suppli
 
 ### Participant pays the wrong bill
 
-Do not fulfill an order unless the paid Ramp bill ID is mapped to it. Surface the unexpected payment to the facilitator.
+Do not fulfill an order unless the paid Ramp bill ID is mapped to it. Surface the unexpected payment to an Admin.
 
 ### Ramp Sandbox is unavailable
 
-Pause new order submission, preserve existing orders, and give facilitators a documented manual recovery procedure. Do not pretend bills were paid in Ramp.
+Pause new order submission, preserve existing orders, and give Admins a documented manual recovery procedure. Do not pretend bills were paid in Ramp.
 
 ## 18. Event operations
 
@@ -530,10 +537,10 @@ Pause new order submission, preserve existing orders, and give facilitators a do
 
 ### During the event
 
-- Facilitators monitor stuck orders and webhook health.
+- Admins monitor stuck orders and webhook health.
 - A visible status board shows the current stage for each team without exposing private details.
 - Teams rotate purchaser, AP, and approver roles.
-- Facilitators avoid performing actions for participants unless necessary to recover the exercise.
+- Admins avoid performing actions for participants unless necessary to recover the exercise.
 
 ### After the event
 
@@ -544,7 +551,7 @@ Pause new order submission, preserve existing orders, and give facilitators a do
 
 ## 19. Success metrics
 
-- At least 90% of teams complete one full order-to-paid-to-delivered flow without facilitator intervention.
+- At least 90% of teams complete one full order-to-paid-to-delivered flow without Admin intervention.
 - At least 80% of participants perform at least one meaningful action in Ramp.
 - Median time from order submission to bill visible in Ramp is under 10 seconds.
 - Median time from `bills.paid` delivery to game fulfillment is under 5 seconds.
@@ -564,14 +571,14 @@ The pilot is ready when:
 6. The event application fulfills the correct order exactly once.
 7. A duplicated webhook does not duplicate inventory.
 8. A missed webhook is repaired by reconciliation.
-9. A facilitator can trace an order from event order ID to invoice number to Ramp bill ID.
+9. An Admin can trace an order from event order ID to invoice number to Ramp bill ID.
 
 ## 21. Decisions needed from Ramp
 
 1. Can Ramp provision one Sandbox business per team at the expected event scale?
 2. What is the simplest authentication model for a partner application spanning those businesses?
 3. Does the Sandbox Demo Action that marks a bill paid emit the standard `bills.paid` webhook in every proposed configuration?
-4. Can the final payment simulation be performed by an attendee with AP Clerk permission, or should it be facilitator-only?
+4. Can the final payment simulation be performed by an attendee with AP Clerk permission, or should it be Admin-only?
 5. Should the Bill Pay payment-release setting be enabled or disabled for the workshop?
 6. If enabled, what exact scheduling step must attendees complete before `pay current bill` becomes available?
 7. Which fields should carry team/order attribution while remaining visible and understandable in the Ramp UI?
@@ -591,7 +598,7 @@ The pilot is ready when:
 
 ### Phase 2: Workshop prototype
 
-- Add participant roles, fake cash, inventory, and facilitator tooling.
+- Add participant roles, fake cash, inventory, and Admin tooling.
 - Add routine, expensive, and incorrect-invoice scenarios.
 - Test on the devices attendees will use.
 
@@ -600,7 +607,7 @@ The pilot is ready when:
 - Validate the chosen isolation model.
 - Test concurrent ordering and webhook traffic.
 - Run the workshop with internal participants.
-- Measure completion time and facilitator burden.
+- Measure completion time and Admin burden.
 
 ### Phase 4: Event launch
 

@@ -37,7 +37,9 @@ Open `http://localhost:3000`.
 - Ramp Sandbox draft creation with attached PDF invoices
 - Signed Ramp webhook inbox stored in Supabase
 - Authoritative paid-bill verification and idempotent inventory fulfillment
-- Admin-only order dashboard
+- Admin console for balances, memberships, team merges/archiving, deadlines, submissions, and order reconciliation
+- Teams of 3–6, invite-link joining, and one active team per participant
+- Project write-ups, typed demo/repository/video/slide links, images, and shareable project pages
 
 ## Ramp Sandbox
 
@@ -49,7 +51,7 @@ Configure Ramp to send bill events to:
 https://your-host/api/webhooks/ramp
 ```
 
-The receiver validates Ramp’s signature over the raw request bytes, records the event durably, and never treats the webhook payload alone as proof of payment. For the workshop, an Admin can run a manual recovery pass from the Admin console when needed:
+The receiver validates Ramp’s signature over the raw request bytes, records the event durably, and never treats the webhook payload alone as proof of payment. For the workshop, an Admin can use **Reconcile Ramp now** in the Admin console when needed. The equivalent local command is:
 
 ```bash
 npm run ramp:reconcile
@@ -66,7 +68,7 @@ npm run build
 
 ## Remaining event work
 
-1. Configure production magic-link email delivery and an authenticated sending domain.
-2. Define the Admin workflow for assigning participants to bakery teams.
-3. Provision Ramp entities and entity-restricted participant permissions; run the two-team isolation test.
-4. Add an automated scheduled reconciliation fallback before relying on webhooks unattended.
+1. Finish Resend domain verification and confirm production magic-link delivery.
+2. Provision Ramp entities and entity-restricted participant permissions; run the two-team isolation test.
+3. Deploy a stable webhook endpoint and rehearse the full payment/reconciliation flow.
+4. Add an automated scheduled reconciliation fallback only if manual Admin reconciliation is no longer sufficient.

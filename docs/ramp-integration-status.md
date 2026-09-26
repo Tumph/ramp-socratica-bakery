@@ -14,7 +14,7 @@
 - The receiver validates raw-body signatures and records events before any provider read.
 - A Ramp bill is fetched and validated against the saved entity, vendor, invoice, currency, amount, and draft mapping before inventory changes.
 - Inventory fulfillment is idempotent.
-- `npm run ramp:reconcile` is the current manual recovery tool for missed or delayed events.
+- The Admin console's **Reconcile Ramp now** action is the current manual recovery tool for missed or delayed events; `npm run ramp:reconcile` is its local CLI equivalent.
 
 ## Still to verify live
 

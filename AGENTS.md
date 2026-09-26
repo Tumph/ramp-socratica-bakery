@@ -51,7 +51,9 @@ Supabase Auth with email magic links is implemented. Account creation and authen
 
 1. A participant creates an account through Supabase Auth using an email magic link.
 2. They join a bakery team only after account creation.
-3. The exact team-joining experience and policy are still to be decided; do not assume reusable team codes or per-person invitation links.
+3. Teams have 3–6 participants. A user can have one active team per event; creation and joining use an invite link. Participants cannot leave, switch, delete, or merge teams themselves.
+4. Active team members may rename their team and edit its submission until the deadline. The latest saved content freezes at the deadline.
+5. Admins can adjust balances, reassign/remove participants, create invites, merge order-free teams, archive/delete eligible empty teams, and manually reconcile Ramp orders. Superadmins additionally manage Admin roles.
 
 Supabase Auth owns user identity and sessions. The application owns bakery membership and authorization: derive team membership server-side, deny orders from users without a team, and scope all participant data to the authenticated user's assigned team.
 
@@ -67,10 +69,10 @@ Supabase Auth owns user identity and sessions. The application owns bakery membe
 
 ## Immediate next steps
 
-1. Configure production email delivery and a dedicated authenticated sending subdomain in Supabase.
-2. Define and build the post-account-creation bakery-team membership flow.
-3. Provision Ramp entities, participant roles, and entity-restricted Bill Pay access; run the two-team isolation test before the event.
-4. Deploy a stable webhook endpoint and add an automated reconciliation path if manual Admin reconciliation is no longer sufficient.
+1. Finish Resend domain verification and test production magic-link delivery.
+2. Provision Ramp entities, participant roles, and entity-restricted Bill Pay access; run the two-team isolation test before the event.
+3. Deploy a stable webhook endpoint and rehearse the full payment/reconciliation flow.
+4. Add an automated reconciliation path only if manual Admin reconciliation is no longer sufficient.
 
 ## Security expectations
 
