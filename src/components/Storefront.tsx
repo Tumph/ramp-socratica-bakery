@@ -9,7 +9,7 @@ type CreatedOrder = {
   totalCents: number;
   rampBillId: string | null;
   integrationPending?: boolean;
-  mode: "mock" | "sandbox";
+  mode: "sandbox";
 };
 
 const money = new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD" });
@@ -31,7 +31,7 @@ export function Storefront({ products }: { products: Product[] }) {
         const result = await response.json();
         if (active) {
           setFulfilled(result.order.status === "FULFILLED");
-          setError(result.order.status === "INTEGRATION_ERROR" ? "Your order is saved. A facilitator needs to resolve its invoice setup; please do not reorder." : "");
+          setError(result.order.status === "INTEGRATION_ERROR" ? "Your order is saved. An Admin needs to resolve its invoice setup; please do not reorder." : "");
         }
       } catch { /* The next poll retries transient network failures. */ }
     };
@@ -68,17 +68,6 @@ export function Storefront({ products }: { products: Product[] }) {
     }
   }
 
-  async function simulatePayment() {
-    if (!order) return;
-    const response = await fetch(`/api/dev/orders/${order.id}/pay`, { method: "POST" });
-    const result = await response.json();
-    if (!response.ok) {
-      setError(result.error ?? "Unable to simulate payment.");
-      return;
-    }
-    setFulfilled(true);
-  }
-
   if (order) {
     return (
       <section className="confirmation panel">
@@ -95,9 +84,6 @@ export function Storefront({ products }: { products: Product[] }) {
           <span className={fulfilled ? "done" : "active"}>2. Review and pay in Ramp</span>
           <span className={fulfilled ? "done" : "muted"}>3. Supplies delivered</span>
         </div>
-        {order.mode === "mock" && !fulfilled && (
-          <button className="primary" onClick={simulatePayment}>Simulate Ramp payment</button>
-        )}
         {error && <p className="error">{error}</p>}
         <a className="textLink" href={`/api/orders/${order.id}/invoice`}>Download invoice PDF</a>
         <a className="textLink" href={`/invoices/${order.id}`} target="_blank">View supplier invoice</a>

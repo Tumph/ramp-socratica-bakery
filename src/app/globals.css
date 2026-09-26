@@ -87,8 +87,9 @@ th:first-child, td:first-child { text-align: left; }
 .authTabs button.selected { color: var(--green); border-bottom-color: var(--green); }
 form { display: grid; gap: 18px; }
 label { display: grid; gap: 8px; font-size: 13px; font-weight: 800; }
-input { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 13px 14px; background: white; color: var(--ink); font: inherit; }
-input:focus { outline: 2px solid color-mix(in srgb, var(--green), transparent 70%); border-color: var(--green); }
+input, select { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 13px 14px; background: white; color: var(--ink); font: inherit; }
+textarea { width: 100%; min-height: 180px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; padding: 13px 14px; background: white; color: var(--ink); font: inherit; line-height: 1.5; }
+input:focus, select:focus, textarea:focus { outline: 2px solid color-mix(in srgb, var(--green), transparent 70%); border-color: var(--green); }
 .codeInput { font-size: 28px; letter-spacing: .28em; text-align: center; font-weight: 800; }
 .codeHelp { color: var(--muted); line-height: 1.5; }
 .devCode { padding: 12px; background: #fff3c9; border-radius: 7px; color: #674d00; }
@@ -96,6 +97,49 @@ input:focus { outline: 2px solid color-mix(in srgb, var(--green), transparent 70
 .accountBar { margin-bottom: 18px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); display: flex; align-items: center; justify-content: space-between; }
 .accountBar div { display: flex; gap: 10px; align-items: baseline; }
 .accountBar span, .accountBar small { color: var(--muted); }
+.adminConsole { display: grid; gap: 28px; margin-bottom: 42px; }
+.adminGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.adminCard { padding: 24px; }
+.adminCard h2, .teamAdminCard h3 { font-size: 25px; }
+.mutedCopy { color: var(--muted); line-height: 1.45; font-size: 14px; }
+.adminNotice { color: var(--green); background: #d9eee5; padding: 12px; border-radius: 8px; overflow-wrap: anywhere; }
+.adminList { display: grid; gap: 8px; margin-top: 18px; }
+.adminList p { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin: 0; font-size: 13px; }
+.adminTeamsHeader { display: flex; justify-content: space-between; align-items: end; gap: 24px; }
+.teamAdminList { display: grid; gap: 16px; }
+.teamAdminCard { padding: 24px; }
+.teamAdminCard > header { display: flex; justify-content: space-between; gap: 18px; align-items: start; border-bottom: 1px solid var(--line); padding-bottom: 16px; margin-bottom: 18px; }
+.teamAdminCard h3 { margin-bottom: 6px; }
+.teamAdminTools { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 22px; margin-bottom: 22px; }
+.teamAdminTools form { grid-template-columns: 1fr 1.5fr auto; align-items: end; gap: 10px; }
+.teamActions { display: grid; gap: 9px; align-content: end; }
+.dangerButton { border: 1px solid #a22e1b; color: #a22e1b; background: white; border-radius: 8px; padding: 11px 14px; font-weight: 800; cursor: pointer; }
+.memberAdminList { display: grid; }
+.memberAdminRow { display: grid; grid-template-columns: 1fr minmax(180px, 260px) auto; gap: 14px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.memberAdminRow small { display: block; color: var(--muted); margin-top: 3px; }
+.memberAdminRow label { font-size: 11px; }
+.memberAdminRow select { padding: 9px; }
+.teamPanel { padding: 28px; display: grid; gap: 18px; }
+.teamPanel > form:first-of-type { grid-template-columns: minmax(0, 1fr) auto; align-items: end; max-width: 560px; }
+.teamPanel ul { margin: -8px 0 0; padding-left: 20px; color: var(--muted); line-height: 1.7; }
+.submissionEditor, .submissionMedia { border-top: 1px solid var(--line); padding-top: 28px; margin-top: 10px; }
+.submissionEditorHeading { display: flex; gap: 18px; align-items: start; justify-content: space-between; }
+.submissionLinkEditor { display: grid; grid-template-columns: 120px 1fr 1.6fr auto; gap: 8px; align-items: center; margin: 10px 0; }
+.submissionLinkEditor input, .submissionLinkEditor select { padding: 10px; }
+.submissionMedia { display: grid; gap: 18px; }
+.imageUpload { display: grid; grid-template-columns: 1.2fr 1fr 1fr auto; align-items: end; gap: 10px; }
+.submissionGallery, .publicGallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.submissionGallery figure, .publicGallery figure { margin: 0; display: grid; gap: 8px; }
+.submissionGallery img, .publicGallery img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); background: var(--cream); }
+.submissionGallery figcaption, .publicGallery figcaption { color: var(--muted); font-size: 13px; }
+.submissionPage { max-width: 1040px; }
+.submissionHero { padding: 40px 0; max-width: 760px; }
+.submissionHero h1 { margin-bottom: 16px; }
+.submissionBody { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 50px; margin-top: 48px; }
+.submissionStory { white-space: pre-wrap; line-height: 1.7; font-size: 17px; }
+.projectLinks { padding: 22px; height: fit-content; }
+.projectLinks a { display: grid; gap: 4px; padding: 12px 0; border-top: 1px solid var(--line); color: var(--green); font-weight: 800; text-decoration: none; }
+.projectLinks span { color: var(--orange); font-size: 10px; letter-spacing: .08em; }
 
 @media (max-width: 800px) {
   .siteHeader nav { display: none; }
@@ -110,6 +154,10 @@ input:focus { outline: 2px solid color-mix(in srgb, var(--green), transparent 70
   .authPanel { grid-template-columns: 1fr; padding: 28px; }
   .authCard { border-left: 0; border-top: 1px solid var(--line); padding: 28px 0 0; }
   .accountBar div { display: grid; gap: 3px; }
+  .adminGrid { grid-template-columns: 1fr; }
+  .teamAdminTools, .teamAdminTools form, .memberAdminRow { grid-template-columns: 1fr; }
+  .adminTeamsHeader { align-items: start; flex-direction: column; }
+  .teamPanel > form:first-of-type, .submissionLinkEditor, .imageUpload, .submissionGallery, .publicGallery, .submissionBody { grid-template-columns: 1fr; }
 }
 
 @media print {

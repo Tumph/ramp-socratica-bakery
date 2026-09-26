@@ -13,7 +13,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <header className="siteHeader">
           <Link href="/" className="brand"><span>SB</span> Socratica Bakery Supply</Link>
-          <nav><Link href="/">Supplier shop</Link><Link href="/facilitator">Facilitator</Link></nav>
+          <nav><Link href="/">Supplier shop</Link><Link href="/admin">Admin</Link></nav>
         </header>
         {children}
       </body>

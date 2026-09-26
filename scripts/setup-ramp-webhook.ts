@@ -1,7 +1,7 @@
 import { loadEnvConfig } from "@next/env";
 import { randomBytes } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
-import { getDatabase } from "../src/lib/db";
+import { createAdminClient } from "../src/lib/supabase/admin";
 import { rampRequest } from "../src/lib/ramp";
 
 function save(key: string, value: string) {
@@ -16,8 +16,8 @@ async function main() {
   if (process.env.RAMP_WEBHOOK_ID) throw new Error("A subscription is already configured. Remove it explicitly before replacing it.");
   const setup = randomBytes(32).toString("hex");
   save("RAMP_WEBHOOK_SETUP_TOKEN", setup);
-  const db = getDatabase();
-  db.prepare("DELETE FROM ramp_webhook_challenges").run();
+  const admin = createAdminClient();
+  await admin.from("ramp_webhook_challenges").delete().neq("challenge", "");
   const subscription = await rampRequest<{ id: string; secret: string; business_id: string }>("/developer/v1/webhooks", {
     method: "POST", body: JSON.stringify({ endpoint_url: endpoint,
       event_types: ["bills.paid", "bills.created", "bills.approved", "bills.updated", "bills.rejected", "bills.archived", "tests.test_event"],
@@ -31,7 +31,8 @@ async function main() {
   console.log(`Created subscription ${subscription.id}; secret saved locally.`);
   let challenge: { challenge: string } | undefined;
   for (let i = 0; i < 30; i++) {
-    challenge = db.prepare("SELECT challenge FROM ramp_webhook_challenges ORDER BY received_at DESC LIMIT 1").get() as { challenge: string } | undefined;
+    const result = await admin.from("ramp_webhook_challenges").select("challenge").order("received_at", { ascending: false }).limit(1).maybeSingle();
+    challenge = result.data ?? undefined;
     if (challenge) break;
     await new Promise(resolve => setTimeout(resolve, 1000));
   }

@@ -3,16 +3,18 @@ import { AuthFlow } from "@/components/AuthFlow";
 import { AccountBar } from "@/components/AccountBar";
 import { catalog } from "@/lib/catalog";
 import { getCurrentUser } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/auth";
+import { TeamSetup } from "@/components/TeamSetup";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const user = await getCurrentUser();
-  if (!user) return <main><AuthFlow /></main>;
+  if (!user) return <main>{await getAuthenticatedUser() ? <TeamSetup /> : <AuthFlow />}</main>;
 
   return (
     <main>
-      <AccountBar email={user.email} teamName={user.teamName} />
+      <AccountBar email={user.email} teamName={user.teamName} teamId={user.teamId} />
       <section className="hero">
         <div>
           <p className="eyebrow">Wholesale ingredients · Toronto</p>

@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 export type RampBillInput = {
   entityId: string | null;
   vendorId?: string;
@@ -69,9 +67,8 @@ export async function rampRequest<T>(path: string, init: RequestInit = {}): Prom
 }
 
 export async function createRampBill(input: RampBillInput) {
-  if ((process.env.RAMP_MODE ?? "mock") === "mock") return { id: `mock_bill_${randomUUID()}`, status: "APPROVAL_PENDING", mode: "mock" as const };
   const vendorId = input.vendorId ?? process.env.RAMP_VENDOR_ID;
-  if (!input.entityId || !vendorId) throw new Error("The team's Ramp entity mapping and RAMP_VENDOR_ID are required in sandbox mode.");
+  if (!input.entityId || !vendorId) throw new Error("The team's Ramp entity mapping and RAMP_VENDOR_ID are required.");
   const issued = input.issuedAt ?? new Date().toISOString().slice(0, 10);
   const due = new Date(`${issued}T00:00:00Z`);
   due.setUTCDate(due.getUTCDate() + 7);

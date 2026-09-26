@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getDatabase } from "@/lib/db";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -10,15 +10,12 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const user = await getCurrentUser();
   if (!user) notFound();
-  const database = getDatabase();
-  const order = database.prepare(`
-    SELECT o.invoice_number, o.total_cents, o.created_at, t.name AS team_name
-    FROM orders o JOIN teams t ON t.id = o.team_id WHERE o.id = ? AND o.team_id = ?
-  `).get(id, user.teamId) as { invoice_number: string; total_cents: number; created_at: string; team_name: string } | undefined;
+  const admin = createAdminClient();
+  const { data: row } = await admin.from("orders").select("invoice_number, total_cents, created_at, teams!inner(name)").eq("id", id).eq("team_id", user.teamId).maybeSingle();
+  const order = row ? { ...row, team_name: (row.teams as unknown as { name: string }).name } : null;
   if (!order) notFound();
-  const lines = database.prepare(
-    "SELECT product_name, quantity, unit_price_cents FROM order_lines WHERE order_id = ? ORDER BY id"
-  ).all(id) as Array<{ product_name: string; quantity: number; unit_price_cents: number }>;
+  const { data: lineRows } = await admin.from("order_lines").select("product_name, quantity, unit_price_cents").eq("order_id", id).order("id");
+  const lines = lineRows ?? [];
 
   return (
     <main className="invoicePage">

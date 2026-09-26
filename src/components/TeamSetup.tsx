@@ -1,0 +1,8 @@
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+export function TeamSetup() {
+ const [name,setName]=useState(""); const [token,setToken]=useState(()=>typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("invite") ?? ""); const [error,setError]=useState(""); const [busy,setBusy]=useState(false); const router=useRouter();
+ async function run(body: { name?: string; action?: string; token?: string }) { setBusy(true);setError(""); try { const r=await fetch(body.name ? "/api/teams" : "/api/team-invites", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); const d=await r.json(); if(!r.ok) throw new Error(d.error); router.push(`/teams/${d.teamId}`); router.refresh(); } catch(e){setError(e instanceof Error?e.message:"Unable to continue.");} finally{setBusy(false);} }
+ return <section className="authPanel panel"><div className="authIntro"><p className="eyebrow">Team setup</p><h1>Start or join a team.</h1><p>Teams need 3–6 members before the project deadline.</p></div><div className="authCard"><form onSubmit={(e)=>{e.preventDefault();void run({name});}}><label>New team name<input required minLength={3} maxLength={80} value={name} onChange={e=>setName(e.target.value)} /></label><button className="primary" disabled={busy}>{busy?"Creating…":"Create team"}</button></form><form onSubmit={(e)=>{e.preventDefault();void run({action:"accept",token});}}><label>Invite code<input required value={token} onChange={e=>setToken(e.target.value)} placeholder="Paste invitation code" /></label><button className="secondary" disabled={busy}>Join team</button></form>{error&&<p className="error">{error}</p>}</div></section>;
+}
