@@ -1,6 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { createAdminClient } from "./supabase/admin";
-import { reconcileRampBill } from "./ramp-sync";
 
 function equal(a: string, b: string) { const aa = Buffer.from(a); const bb = Buffer.from(b); return aa.length === bb.length && timingSafeEqual(aa, bb); }
 export function validRampSignature(raw: Uint8Array, signature: string | null, secret: string | undefined) {
@@ -21,12 +20,4 @@ export async function receiveRampWebhook(request: Request) {
   if (!supported.includes(event.type)) return Response.json({ received: true, ignored: true }); if (event.type !== "tests.test_event" && typeof objectId !== "string") return Response.json({ error: "Missing bill ID." }, { status: 400 });
   const { error } = await admin.from("webhook_events").upsert({ ramp_event_id: event.id, event_type: event.type, business_id: event.business_id, object_id: typeof objectId === "string" ? objectId : null, payload: event }, { onConflict: "ramp_event_id", ignoreDuplicates: true });
   if (error) return Response.json({ error: "Unable to save event." }, { status: 500 }); return Response.json({ received: true });
-}
-let processing = false;
-export async function processRampWebhookInbox() {
-  if (processing) return []; processing = true; const results: Array<{ id: string; ok: boolean }> = [];
-  try { const admin = createAdminClient(); const { data: events } = await admin.from("webhook_events").select("ramp_event_id, event_type, object_id").is("processed_at", null).order("created_at").limit(100);
-    for (const event of events ?? []) try { if (event.event_type !== "tests.test_event") { if (!event.object_id) throw new Error("Missing bill ID."); await reconcileRampBill(event.object_id); } await admin.from("webhook_events").update({ processed_at: new Date().toISOString(), processing_result: "ok" }).eq("ramp_event_id", event.ramp_event_id); results.push({ id: event.ramp_event_id, ok: true }); }
-    catch (error) { await admin.from("webhook_events").update({ processing_result: error instanceof Error ? error.message : "Processing failed." }).eq("ramp_event_id", event.ramp_event_id); results.push({ id: event.ramp_event_id, ok: false }); } return results;
-  } finally { processing = false; }
 }

@@ -11,19 +11,12 @@ async function readSync(orderId: string): Promise<SyncOrder> {
 }
 function validateResource(row: SyncOrder, bill: RampResource) { if (!bill.id || bill.entity_id !== row.entity_id || bill.vendor?.id !== row.vendor_id || bill.invoice_number !== row.invoice_number || bill.amount?.currency_code !== "CAD" || bill.amount?.amount !== row.total_cents) throw new Error("Ramp bill does not match the order's entity, supplier, invoice, currency, or amount. Manual review required."); if (row.ramp_bill_id && row.ramp_bill_id !== bill.id) throw new Error("Order already maps to a different Ramp bill."); }
 function statusFor(bill: RampResource) { return bill.status_summary === "APPROVAL_REJECTED" || bill.status_summary === "ARCHIVED" ? "REJECTED" : bill.status_summary === "APPROVAL_PENDING" ? "AWAITING_RAMP_REVIEW" : bill.status_summary?.startsWith("PAYMENT_") || bill.status_summary === "AWAITING_RELEASE" ? "PAYMENT_PENDING" : "AWAITING_RAMP_REVIEW"; }
-export async function applyRampBill(orderId: string, bill: RampResource) {
+async function applyRampBill(orderId: string, bill: RampResource) {
   const row = await readSync(orderId); validateResource(row, bill); if (row.draft_id && bill.draft_bill_id !== row.draft_id) throw new Error("Ramp bill does not originate from this order's draft."); const admin = createAdminClient();
   await admin.from("orders").update({ ramp_bill_id: bill.id, ramp_status: bill.status_summary ?? bill.status }).eq("id", orderId);
   if (bill.status === "PAID" && bill.status_summary === "PAYMENT_COMPLETED") return fulfillOrderByBillId(bill.id);
   if (row.status !== "FULFILLED") await admin.from("orders").update({ status: statusFor(bill), error_message: null }).eq("id", orderId);
   return { orderId, paid: false, rampStatus: bill.status_summary ?? bill.status };
-}
-export async function reconcileRampBill(billId: string) {
-  const bill = await rampRequest<RampResource>(`/developer/v1/bills/${encodeURIComponent(billId)}`); const admin = createAdminClient();
-  let { data: row } = await admin.from("orders").select("id").eq("ramp_bill_id", billId).maybeSingle();
-  if (!row && bill.draft_bill_id) { const found = await admin.from("order_ramp_sync").select("order_id").eq("draft_id", bill.draft_bill_id).maybeSingle(); row = found.data ? { id: found.data.order_id } : null; }
-  if (!row) { const found = await admin.from("orders").select("id, order_ramp_sync!inner(entity_id, vendor_id)").eq("invoice_number", bill.invoice_number).eq("order_ramp_sync.entity_id", bill.entity_id).eq("order_ramp_sync.vendor_id", bill.vendor?.id ?? "").maybeSingle(); row = found.data; }
-  if (!row) return { ignored: true, reason: "Bill is not an event order." }; const result = await applyRampBill(row.id, bill); if (bill.draft_bill_id) await admin.from("order_ramp_sync").update({ draft_id: bill.draft_bill_id }).eq("order_id", row.id).is("draft_id", null); return result;
 }
 export async function syncRampOrder(orderId: string) {
   const admin = createAdminClient(); let row = await readSync(orderId);

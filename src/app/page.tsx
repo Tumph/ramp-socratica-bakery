@@ -2,8 +2,7 @@ import { Storefront } from "@/components/Storefront";
 import { AuthFlow } from "@/components/AuthFlow";
 import { AccountBar } from "@/components/AccountBar";
 import { catalog } from "@/lib/catalog";
-import { getCurrentUser } from "@/lib/auth";
-import { getAuthenticatedUser } from "@/lib/auth";
+import { getAuthenticatedUser, getCurrentUser } from "@/lib/auth";
 import { TeamSetup } from "@/components/TeamSetup";
 
 export const dynamic = "force-dynamic";

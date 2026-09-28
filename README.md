@@ -1,14 +1,15 @@
 # Ramp Socratica Bakery
 
-An event prototype where bakery teams order fictional supplies, review/pay matching Ramp Sandbox bills, and receive inventory only after Ramp confirms payment.
+An event prototype where bakery teams order fictional supplies, review/pay matching Ramp Sandbox bills, and receive inventory after an Admin reconciles a verified payment.
 
 ## Architecture
 
 - Next.js App Router application with TypeScript.
-- Supabase Postgres owns teams, membership, game cash, inventory, Ramp mappings, orders, and the durable webhook inbox.
-- Supabase Auth provides email magic-link authentication. A signed-in account needs an Admin-assigned bakery team before it can order.
-- Supabase Auth sends magic links through Resend SMTP from `login@socratica.info`; provider credentials stay in the Supabase dashboard, not this repository.
-- Ramp owns vendors, bills, approvals, and payment state. The app verifies an authoritative Ramp bill before inventory is fulfilled.
+- Supabase Postgres owns teams, membership, game cash, inventory, Ramp mappings, orders, and the durable webhook inbox. There is no SQLite runtime.
+- Supabase Auth provides email magic-link authentication. After signing in, participants create a team or accept an invitation; Admin assignment is also available.
+- Ramp integration uses one configured Sandbox business and supplier, with an explicit entity mapping for each team. Multi-business credentials are not implemented.
+- Ramp owns vendors, bills, approvals, and payment state. The app fetches and validates the authoritative bill before inventory fulfillment.
+- The webhook receiver is implemented; stable deployment and an automatic event-processing path are planned. Currently, receiving an event records it without triggering delivery. The Admin console and CLI reconcile orders on demand.
 
 ## Local setup
 
@@ -26,59 +27,81 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SECRET_KEY=
 ```
 
-`SUPABASE_SECRET_KEY` is server-only and must start with `sb_secret_`; never commit it or expose it with a `NEXT_PUBLIC_` name.
+Use the project's modern `sb_secret_` key for `SUPABASE_SECRET_KEY`. It is server-only; never commit it or expose it with a `NEXT_PUBLIC_` name.
 
 Open `http://localhost:3000`.
 
+### Database setup and migration history
+
+The app connects to a provisioned Supabase project; `npm install` and `npm run dev` do not create or migrate a database. The app currently uses the event ID defined in `src/lib/auth.ts`.
+
+`supabase/migrations/` contains Postgres changes for Admin operations, Admin roles, and the submission-media bucket. These are **not SQLite migrations** and are only a partial copy of the live Supabase migration history. The base schema, membership/RLS setup, bootstrap setup, and atomic fulfillment function were applied remotely and are not checked in. Local version timestamps also differ from the corresponding remote versions. Do not blindly replay these files against the existing project or treat them as a complete fresh-project setup.
+
+See [the codebase audit](./docs/codebase-audit.md) for the read-only database findings and outstanding history synchronization work.
+
 ## Auth email delivery
 
-Resend is configured as Supabase Auth's custom SMTP provider. The `socratica.info` sending domain has verified DKIM and return-path SPF records, and a real magic-link request has completed successfully through Supabase.
+The September 28 operations record reports Resend custom SMTP, verified sending-domain records, and successful magic-link delivery from `Socratica Bakery <login@socratica.info>`. It records a **30-email-per-hour project-wide Auth limit**. Those dashboard settings are external to this repository and were not rechecked by the codebase audit.
 
-- The configured sender is `Socratica Bakery <login@socratica.info>`.
-- The Supabase Auth email rate limit is **30 emails per hour for the project**, shared by all recipients.
-- Do not add SMTP credentials or Resend API keys to `.env.local` unless the application begins sending email directly; Auth delivery is configured in **Supabase Dashboard → Authentication → SMTP**.
-- Keep magic-link emails short and transactional. A branded Supabase Auth custom domain such as `auth.socratica.info` remains a recommended deliverability improvement because it replaces the shared `*.supabase.co` link hostname.
+Auth delivery is configured in **Supabase Dashboard → Authentication → SMTP**. The application does not send email directly; SMTP credentials and Resend API keys are not needed in `.env.local`.
 
-## What is implemented
+Inbox placement and event arrival capacity still need verification. The operations plan proposes a branded Supabase Auth domain such as `auth.socratica.info` and a strictly transactional Auth template.
 
-- Supplier catalogue, cash reservation, invoices, and Ramp Sandbox draft creation
-- Supabase magic-link authentication and server-side team authorization
-- Supabase Row Level Security for participant-facing data
-- Ramp Sandbox draft creation with attached PDF invoices
-- Signed Ramp webhook inbox stored in Supabase
-- Authoritative paid-bill verification and idempotent inventory fulfillment
-- Admin console for balances, memberships, team merges/archiving, deadlines, submissions, and order reconciliation
-- Teams of 3–6, invite-link joining, and one active team per participant
-- Project write-ups, typed demo/repository/video/slide links, images, and shareable project pages
+## Implemented behavior
+
+- Supplier catalogue, available-cash deduction at order creation, printable/downloadable invoices, and Ramp draft creation with attached PDFs
+- Magic-link authentication, self-service team creation, and owner/Admin-created invitations
+- One active team per participant per event, with a database team-size check; teams may have fewer than three members while forming
+- Shop access after the submission deadline for teams with at least three active members and a submission row
+- Project title, tagline, plain-text write-up, typed links, images, and public project pages with stable IDs
+- Submission and image endpoints reject edits after the deadline
+- Admin controls for balances, memberships, order-free team merges, empty-team archiving/deletion, invitations, deadlines, and reconciliation; Superadmins manage Admin roles
+- Signed webhook storage and authoritative bill validation during manual reconciliation
+- Atomic, idempotent inventory fulfillment in Supabase
+
+Known gaps include concurrent cash reservation, rejected-order refunds, invite preservation through login, team-name deadline enforcement, and RLS membership revocation. These are recorded in [the audit](./docs/codebase-audit.md); the feature list does not imply they are solved.
 
 ## Ramp Sandbox
 
-Configure `RAMP_CLIENT_ID`, `RAMP_CLIENT_SECRET`, and `RAMP_VENDOR_ID`. Each team must have an explicit record in `team_ramp_entities`; there is no shared fallback entity.
+Configure `RAMP_CLIENT_ID`, `RAMP_CLIENT_SECRET`, and `RAMP_VENDOR_ID`. Each team needs an explicit `team_ramp_entities` record; there is no shared fallback entity. New teams start with zero cash, so an Admin must allocate their balance.
 
-Configure Ramp to send bill events to:
+The webhook route is:
 
 ```text
 https://your-host/api/webhooks/ramp
 ```
 
-The receiver validates Ramp’s signature over the raw request bytes, records the event durably, and never treats the webhook payload alone as proof of payment. For the workshop, an Admin can use **Reconcile Ramp now** in the Admin console when needed. The equivalent local command is:
+The receiver validates Ramp's signature over the raw request bytes and saves supported events durably. It does not fetch bills, fulfill orders, or update inbox processing markers. Use **Reconcile Ramp now** in the Admin console or:
 
 ```bash
 npm run ramp:reconcile
 ```
 
-An automated scheduled reconciliation job is deliberately deferred; Vercel Hobby does not support frequent cron jobs. See [AGENTS.md](./AGENTS.md) for the operating rules and [PRD.md](./PRD.md) for the product proposal.
+The Admin action checks unfinished orders in the configured event. The CLI checks all unfinished orders in the connected database. Both can recover draft/attachment setup and fulfill a matching bill only when Ramp returns `PAID` and `PAYMENT_COMPLETED`.
+
+Useful local operations scripts:
+
+```bash
+npm run ramp:webhook-server
+npx tsx scripts/setup-ramp-supplier.ts
+npx tsx scripts/setup-ramp-webhook.ts https://your-host/api/webhooks/ramp
+npx tsx scripts/remove-ramp-webhook.ts
+```
+
+The webhook-only server listens on `127.0.0.1:3901`. Setup/removal scripts change Sandbox resources and local environment configuration; remove temporary subscriptions before closing a development tunnel. Automatic webhook processing is planned alongside stable deployment. No worker or scheduled reconciliation job is configured yet.
 
 ## Verification
 
 ```bash
+npm test
 npm run lint
 npm run build
 ```
 
-## Remaining event work
+The current test suite covers raw-byte webhook signature validation. It does not test authentication, authorization, database concurrency, refunds, or full Ramp fulfillment.
 
-1. Provision Ramp entities and entity-restricted participant permissions; run the two-team isolation test.
-2. Deploy a stable webhook endpoint and rehearse the full payment/reconciliation flow.
-3. Improve magic-link inbox placement: use a branded Supabase Auth custom domain and keep the Auth template strictly transactional.
-4. Add an automated scheduled reconciliation fallback only if manual Admin reconciliation is no longer sufficient.
+## Remaining work
+
+The [audit](./docs/codebase-audit.md) lists confirmed code and database gaps. The [integration status](./docs/ramp-integration-status.md) distinguishes past live checks from unfinished verification. [PRD.md](./PRD.md) contains current behavior plus explicitly proposed workshop requirements.
+
+Ramp permissions/isolation rehearsal is paused while the demo site has issues. Stable webhook deployment will be handled separately with the planned Vercel setup. Automated reconciliation remains deferred until unattended operation is needed.

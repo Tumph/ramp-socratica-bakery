@@ -12,6 +12,7 @@
     "ramp:webhook-server": "tsx scripts/ramp-webhook-server.ts"
   },
   "dependencies": {
+    "@next/env": "16.3.5",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.117.2",
     "next": "^16.0.0",

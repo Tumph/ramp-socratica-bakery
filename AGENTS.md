@@ -23,8 +23,9 @@ Read `PRD.md` for the complete product proposal and `README.md` for setup instru
 - Supabase Postgres stores game state, inventory, team membership, Ramp mappings, and the durable webhook inbox.
 - Supabase Auth provides email magic-link identity and sessions.
 - Ramp Sandbox orders create drafts with attached PDF invoices so participants can review and submit them in Ramp.
-- A signed webhook receiver records events in Supabase. An Admin can use the console’s manual Ramp reconciliation action to recover missed events until an automated reconciliation path is added.
+- A signed webhook receiver records events in Supabase. Receipt does not trigger fulfillment. An Admin uses manual Ramp reconciliation as the current payment-processing path; no worker drains the inbox yet. Stable webhook deployment and automatic event processing remain planned.
 - The event database owns fake cash, inventory, and game state. Ramp owns vendors, bills, approvals, and payment state.
+- Runtime Ramp configuration supports one Sandbox business and supplier, with per-team entity mappings.
 
 ## Common commands
 
@@ -43,7 +44,7 @@ The default local URL is `http://localhost:3000`.
 
 - Account creation and login use Supabase email magic links.
 - Supabase owns user identity and session cookies; its email provider settings control delivery.
-- Resend custom SMTP is configured in Supabase with `Socratica Bakery <login@socratica.info>` and the verified `socratica.info` sending domain. The project-wide Auth email limit is 30 emails per hour.
+- The September 28 operations record reports Resend custom SMTP in Supabase with `Socratica Bakery <login@socratica.info>`, a verified `socratica.info` sending domain, and a project-wide Auth email limit of 30 emails per hour. These are external provider settings; verify them before event-scale login.
 - Orders and invoices derive team membership from the authenticated session. Never trust a team ID supplied by the browser.
 
 ## Target authentication and team membership
@@ -67,6 +68,14 @@ Supabase Auth owns user identity and sessions. The application owns bakery membe
 - A local webhook test needs an HTTPS tunnel. Remove temporary subscriptions before closing the tunnel. The event needs a stable public URL; an Admin can manually reconcile while automated reconciliation is deferred.
 - Ramp Sandbox's `pay current bill` demo action marks an eligible bill paid immediately. When Ramp requires scheduling first, schedule the fictional payment for today, then use the demo action. Do not use `Paid manually` for the participant-facing payment demonstration.
 - Each event team needs an explicit `team_ramp_entities` mapping before it can create a Sandbox order. Never fall back to a shared default entity.
+
+## Audit findings and implementation limits
+
+Read `docs/codebase-audit.md` before treating target behavior as implemented. The live Supabase database has base tables, RLS, membership constraints, and atomic fulfillment; local migrations contain only part of its Postgres history and have different version timestamps. They are not legacy SQLite files.
+
+Current gaps include nontransactional order/cash writes, rejected-order refunds, invite context lost during login, team renaming after the deadline, concurrent invite acceptance/team-size checks, and an RLS helper that does not exclude former members. Submission writes are also nontransactional. No database changes were made during the audit.
+
+Ramp isolation/payment rehearsal is paused while the demo site has issues. Stable endpoint deployment is planned separately on Vercel.
 
 ## Immediate next steps
 

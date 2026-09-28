@@ -53,7 +53,6 @@ h2 { font-family: Georgia, "Times New Roman", serif; font-size: 30px; margin-bot
 .steps .done { background: #d9eee5; color: var(--green); }
 .steps .active { background: #ffe1d3; color: #a63c14; }
 .steps .muted { background: #eeeae2; color: var(--muted); }
-.confirmation .primary { display: block; margin: 0 auto 18px; }
 .textLink { font-weight: 800; color: var(--green); }
 .pageHeading { padding: 30px 0; }
 .pageHeading h1 { font-size: 54px; margin-bottom: 16px; }
@@ -82,17 +81,13 @@ th:first-child, td:first-child { text-align: left; }
 .authIntro h1 { font-size: clamp(42px, 6vw, 68px); }
 .authIntro > p:last-child { color: var(--muted); font-size: 18px; line-height: 1.6; }
 .authCard { border-left: 1px solid var(--line); padding-left: 48px; }
-.authTabs { display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 28px; border-bottom: 1px solid var(--line); }
-.authTabs button { border: 0; border-bottom: 3px solid transparent; padding: 12px 6px; color: var(--muted); background: transparent; font-weight: 800; cursor: pointer; }
-.authTabs button.selected { color: var(--green); border-bottom-color: var(--green); }
 form { display: grid; gap: 18px; }
 label { display: grid; gap: 8px; font-size: 13px; font-weight: 800; }
 input, select { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 13px 14px; background: white; color: var(--ink); font: inherit; }
 textarea { width: 100%; min-height: 180px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; padding: 13px 14px; background: white; color: var(--ink); font: inherit; line-height: 1.5; }
 input:focus, select:focus, textarea:focus { outline: 2px solid color-mix(in srgb, var(--green), transparent 70%); border-color: var(--green); }
-.codeInput { font-size: 28px; letter-spacing: .28em; text-align: center; font-weight: 800; }
-.codeHelp { color: var(--muted); line-height: 1.5; }
-.devCode { padding: 12px; background: #fff3c9; border-radius: 7px; color: #674d00; }
+.authHelp { color: var(--muted); line-height: 1.5; }
+.inviteLink { padding: 12px; background: #fff3c9; border-radius: 7px; color: #674d00; overflow-wrap: anywhere; }
 .linkButton { border: 0; background: transparent; color: var(--green); text-decoration: underline; cursor: pointer; }
 .accountBar { margin-bottom: 18px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); display: flex; align-items: center; justify-content: space-between; }
 .accountBar div { display: flex; gap: 10px; align-items: baseline; }

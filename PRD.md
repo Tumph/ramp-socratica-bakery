@@ -6,16 +6,22 @@
 - Product: Interactive bakery business simulation using Ramp Sandbox Bill Pay
 - Audience: Product, engineering, event operations, curriculum, and Ramp partner teams
 
-### Current implementation snapshot (September 2026)
+### Current implementation snapshot (audited September 28, 2026)
 
-- Supabase Postgres and Supabase Auth replace the earlier local SQLite/prototype-auth plan.
-- Participants create accounts by magic link, create or accept an invite into one team, and cannot self-switch or leave teams.
-- Teams contain 3–6 participants. Team names and submission content are editable by any active member until the deadline; the latest saved version freezes automatically at the deadline.
-- Submissions support a title, tagline, write-up, typed project links, images, and a shareable immutable-ID project page.
-- The Admin console manages balances, membership, team merges/archiving/deletion, invitations, deadlines, Admin roles, and manual Ramp reconciliation. A Superadmin manages Admin roles.
-- Webhooks are stored durably and paid bills are verified against Ramp before fulfillment. There is no continuously running reconciliation worker on Vercel Hobby; an Admin triggers reconciliation when needed.
-- Resend SMTP is configured in Supabase. The `socratica.info` sending domain is verified and production magic-link delivery has been tested successfully from `login@socratica.info`.
-- Supabase Auth has a project-wide rate limit of 30 Auth emails per hour. A branded Supabase Auth custom domain (for example, `auth.socratica.info`) remains a recommended inbox-placement improvement because magic-link URLs otherwise use the shared Supabase hostname.
+- Supabase Postgres and Supabase Auth are the active database and identity system. SQLite runtime code was removed. Local Postgres migrations are a partial copy of the remote Supabase history, not a complete database bootstrap.
+- Participants authenticate by magic link, then create or accept an invitation into one team. Participants have no self-service leave/switch/delete/merge endpoints. Invites are single-use in the intended sequential flow and expire after seven days; invite acceptance is not transactional.
+- A database unique index enforces one active membership per event. A trigger checks the six-member maximum, but its count is not serialized against concurrent joins. Teams may have fewer than three participants while forming.
+- Orders require at least three active members, a submission row, and a passed submission deadline. A completed write-up is not required. New teams start with zero cash and need an Admin allocation plus an explicit Ramp entity mapping.
+- Active members can edit submissions and images until the deadline. Team renaming currently has no deadline check. There is no immutable submission snapshot; changing the event deadline can reopen editing.
+- Submissions support a title, tagline, plain-text write-up (stored as `story_markdown` but not rendered as Markdown), typed project links, images, and public pages addressed by stable submission IDs.
+- The Admin console manages balances, membership, order-free team merges, empty-team archiving/deletion, invitations, deadlines, and manual Ramp reconciliation. Superadmins manage Admin roles.
+- Runtime Ramp configuration supports one Sandbox business and supplier with per-team entity mappings. Separate Sandbox businesses per team would require integration changes.
+- The signed webhook receiver is implemented; stable deployment and automatic event processing are planned. Currently, received webhooks are stored durably without initiating reconciliation or fulfillment. Admin/CLI reconciliation fetches and validates bills; the live Supabase fulfillment function locks the order and updates inventory atomically and idempotently.
+- Cash is deducted at order creation through separate database writes. Transactional reservation, request deduplication, and rejected-order refunds are not implemented.
+- The September 28 operations record reports successful Resend/Supabase magic-link delivery and a 30-email/hour project-wide limit. The audit did not recheck SMTP, DNS, or Auth dashboard settings.
+- All public tables have RLS enabled, but the live membership helper omits `left_at`, allowing former members to retain direct Data API read access to their old team's protected rows. Application routes do filter active membership.
+
+See [docs/codebase-audit.md](./docs/codebase-audit.md) for evidence, cleanup, and remaining gaps. Later goals, scenarios, requirements, metrics, and acceptance criteria are proposals; they do not establish that a feature or live test is complete. Ramp isolation/payment rehearsal is paused while its demo site is having issues; stable webhook deployment is planned separately on Vercel.
 
 ## 1. Summary
 
@@ -125,14 +131,14 @@ The first option is more hands-on. The second has tighter operational control.
 
 1. The purchaser opens the event's wholesale supplier portal.
 2. The purchaser selects flour, butter, chocolate, packaging, equipment rental, or other fake supplies.
-3. The portal shows prices, delivery times, and invoice terms such as "due on receipt" or "net 30."
+3. The current portal shows prices and fixed Net 7 terms. Delivery estimates and selectable terms remain proposed.
 4. The purchaser places the order without entering payment details.
 5. The portal confirms that the supplier will invoice the bakery.
 
 ### Phase C: Receive and review the invoice
 
 1. The event backend creates an invoice number and PDF.
-2. It finds or creates the supplier as a Ramp vendor.
+2. It uses the configured supplier vendor; vendor setup is a separate operations script.
 3. It creates a Ramp Sandbox bill and attaches the invoice PDF.
 4. The supplier portal changes the order status to `Awaiting review in Ramp`.
 5. The accounts-payable participant opens Ramp and checks:
@@ -192,8 +198,8 @@ The first option is more hands-on. The second has tighter operational control.
         |                          |                           +----------+
         |                          |                                      |
         |                          |                           +----------v----------+
-        |                          |                           | Event webhook       |
-        |                          |                           | verifies + fulfills |
+        |                          |                           | Webhook saves event |
+        |                          |                           | Admin sync fulfills |
         |                          |                           +----------+----------+
         |                          |                                      |
         |<-------------------------+-------------- Supplies delivered ----+
@@ -224,7 +230,7 @@ The first option is more hands-on. The second has tighter operational control.
 | catalogue/orders |       | orders/webhooks |       | teams + mappings |
 +------------------+       +---+----------+--+       +------------------+
                               |          |
-                              |          +-----------> Invoice PDF store
+                              |          +-----------> PDF generated on demand
                               |
                               +----------------------> Admin console
 ```
@@ -236,15 +242,15 @@ The first option is more hands-on. The second has tighter operational control.
 - Shows the fake product catalogue.
 - Creates orders.
 - Displays order and fulfillment status.
-- Links the participant to the corresponding Ramp task where practical.
+- Shows instructions to open Ramp Bill Pay; individual bill deep links are not implemented.
 
 #### Event API
 
 - Validates the team's fake cash and purchasing rules.
 - Generates invoice records and PDFs.
-- Creates or looks up Ramp vendors.
+- Uses the configured Ramp supplier; a separate setup script creates or looks up that vendor.
 - Creates Ramp bills and uploads invoice attachments.
-- Stores the Ramp business ID and bill ID for every order.
+- Stores the entity/vendor snapshot, draft ID, and eventual bill ID; the business ID is configured globally.
 - Receives and verifies Ramp webhooks.
 - Fulfills paid orders idempotently.
 
@@ -252,7 +258,7 @@ The first option is more hands-on. The second has tighter operational control.
 
 - Stores teams, participants, orders, line items, inventory, and game balances.
 - Stores Ramp identifiers and integration state.
-- Stores processed webhook event IDs.
+- Deduplicates received webhook event IDs. Processing marker columns exist but are not updated by the current runtime.
 - Remains the source of truth for the game.
 
 #### Ramp Sandbox
@@ -270,146 +276,70 @@ The first option is more hands-on. The second has tighter operational control.
 
 ## 10. Team isolation model
 
-### Preferred model: one Sandbox business per team
+### Current integration: one Sandbox business, explicit team entities
 
-```text
-Ramp Sandbox
-|
-+-- Team A Bakery business
-|   +-- Team A users
-|   +-- Team A vendors
-|   +-- Team A bills and approvals
-|
-+-- Team B Bakery business
-|   +-- Team B users
-|   +-- Team B vendors
-|   +-- Team B bills and approvals
-|
-+-- Team C Bakery business
-    +-- Team C users
-    +-- Team C vendors
-    +-- Team C bills and approvals
-```
+The runtime uses one global set of credentials, one supplier vendor, and one expected webhook business ID. Each team maps to a distinct Ramp entity through `team_ramp_entities`. Entity-restricted participant Bill Pay permissions and cross-team visibility still need live verification; entity attribution alone does not prove isolation.
 
-Benefits:
+### Proposed alternative: one Sandbox business per team
 
-- Each team experiences Ramp as its own business.
-- Teams cannot see one another's suppliers or bills.
-- Approval policies and roles are easy to explain.
-- The event story matches the product model.
-
-Cost:
-
-- Ramp must help provision and configure multiple Sandbox businesses.
-- OAuth credentials, webhook events, and business IDs must be handled per business.
-
-### Fallback model: one business for the entire event
-
-Teams share one Sandbox business and are separated with departments, locations, custom metadata, invoice prefixes, or another agreed field.
-
-This is operationally easier but less realistic. It can also expose other teams' bills depending on Ramp roles and permissions. Use it only after validating visibility and approval behavior with Ramp.
+Separate businesses could provide stronger separation, but require per-business credentials, vendors, and webhook routing. These are not implemented. Decide on this model with Ramp before changing the integration.
 
 ## 11. Core data model
 
-```text
-Team
-  id
-  name
-  fake_cash_balance
-  ramp_business_id
+Supabase contains:
 
-Order
-  id
-  team_id
-  supplier_id
-  invoice_number
-  total_amount
-  terms
-  status
-  ramp_bill_id
+- `events`, `profiles`, `teams`, `team_members`, and `team_invites`
+- `event_admins`, `superadmin_bootstraps`, and `team_balance_adjustments`
+- `submissions`, `submission_links`, and `submission_assets`
+- `team_ramp_entities`, `orders`, `order_lines`, and `order_ramp_sync`
+- `inventory`, `webhook_events`, and `ramp_webhook_challenges`
 
-OrderLine
-  order_id
-  product_id
-  quantity
-  unit_price
+The supplier ID is configuration (`RAMP_VENDOR_ID`), not a supplier table. Cash and order prices use integer cents. Submission images are in the public `submission-media` Storage bucket; invoice PDFs are generated on demand and attached to Ramp.
 
-Supplier
-  id
-  name
-  ramp_vendor_id_by_business
-
-WebhookEvent
-  ramp_event_id
-  event_type
-  business_id
-  object_id
-  processed_at
-  processing_result
-```
-
-### Order statuses
+### Current order transitions
 
 ```text
-DRAFT
-  -> SUBMITTED
-  -> BILL_CREATING
-  -> AWAITING_RAMP_REVIEW
-  -> APPROVED
-  -> PAYMENT_PENDING
-  -> PAID
-  -> FULFILLED
+BILL_CREATING -> AWAITING_RAMP_REVIEW -> PAYMENT_PENDING -> FULFILLED
+                           |                 |
+                           +---- REJECTED ---+
 
-Alternate exits:
-  REJECTED
-  CANCELLED
-  INTEGRATION_ERROR
+Setup/provider failures -> INTEGRATION_ERROR -> manual reconciliation
 ```
 
-The application should not infer `PAID` merely because a bill was approved. Only a verified `bills.paid` event or a successful bill-status reconciliation may cause the paid transition.
+`APPROVED` and `PAID` are allowed by the live schema but are not emitted as separate stages by current reconciliation. `DRAFT`, `SUBMITTED`, and `CANCELLED` are not current order statuses. A Ramp draft is represented by `ramp_status=DRAFT` while the order is `AWAITING_RAMP_REVIEW`.
 
-## 12. Ramp integration behavior
+Only a fetched, matching bill with `status=PAID` and `status_summary=PAYMENT_COMPLETED` can trigger fulfillment. A webhook payload never proves payment.
 
-### Creating a bill
+## 12. Current Ramp integration behavior
 
-For each submitted supplier order, the backend should:
+### Creating a draft
 
-1. Confirm the team has enough fake cash according to the game rules.
-2. Generate a stable internal order ID and invoice number.
-3. Resolve the team's Ramp business and access token.
-4. Find or create the vendor for that Sandbox business.
-5. Create the bill or draft bill with the agreed amount, invoice number, due date, vendor, and team attribution.
-6. Upload the generated invoice PDF as an `INVOICE` attachment.
-7. Persist the returned Ramp bill ID before returning success to the browser.
-8. Display the Ramp bill link if the API response provides one or it can be constructed safely.
+1. Derive the participant's active team server-side and check shop eligibility.
+2. Check available cash, allocate an order/invoice ID, and read the team's explicit Ramp entity mapping.
+3. Save the order, lines, reduced balance, and entity/vendor snapshot through separate writes. Atomic reservation remains outstanding.
+4. Search for a matching existing bill/draft before creating a Ramp draft. A saved creation-attempt marker blocks blind retries after an uncertain result; concurrent synchronization is not fully serialized.
+5. Generate and attach the invoice PDF, save the draft ID, and set the order to awaiting review.
+6. After human submission in Ramp, reconciliation locates the matching bill and stores its bill ID.
 
-### Receiving `bills.paid`
+The portal provides PDF download and printable invoice links, plus instructions to open Ramp Bill Pay. It does not link directly to a Ramp bill.
 
-The webhook handler should:
+### Receiving events
 
-1. Read the unmodified request body.
-2. Verify the `X-Ramp-Signature` HMAC using the subscription secret.
-3. Return a successful response quickly and queue processing.
-4. Reject unsupported event types.
-5. Deduplicate using the Ramp event ID.
-6. Identify the Ramp business using `business_id`.
-7. Find the order using the bill resource ID.
-8. Fetch the bill from Ramp when confirmation or additional fields are needed.
-9. Mark the order paid exactly once.
-10. Deduct fake cash and add inventory in one database transaction.
-11. Record the result for Admin support and auditing.
+1. Verify the exact raw bytes against the subscription secret. A separate setup token is allowed only for verification challenges, not bill events.
+2. Validate the event and expected business ID; acknowledge unsupported event types without storing them.
+3. Save supported events with deduplication by Ramp event ID before returning success.
 
-### Webhook retry behavior
+Automatic processing of stored webhook events is planned when the stable receiver is deployed. No worker drains this inbox yet. Admin/CLI reconciliation currently operates on unfinished orders independently of inbox rows and does not mark events processed.
 
-Ramp may retry failed webhook deliveries. The same event ID is reused across retry attempts. The application must treat repeated delivery as normal and must never deliver supplies twice.
+### Reconciliation and fulfillment
 
-### Reconciliation fallback
+Admin reconciliation checks unfinished orders in the configured event; the CLI checks unfinished orders across the connected database. Each fetches authoritative Ramp resources, validates entity, supplier, invoice, currency, amount, and known draft/bill mapping, and calls Supabase fulfillment only for a completed payment. The database locks the order, adds inventory, and sets `FULFILLED` in one transaction. Cash was already deducted at order creation and is not deducted again.
 
-A future periodic reconciliation job may inspect orders stuck in `PAYMENT_PENDING` or `AWAITING_RAMP_REVIEW`, fetch the associated bill from Ramp, and repair missed state transitions. Until then, an Admin triggers the same reconciliation on demand.
-
-Until an automated job is justified, the Admin console runs reconciliation on demand to protect the event from temporary webhook, network, or deployment failures.
+A periodic reconciliation job is deferred until unattended operation is needed. Live payment and two-team isolation verification remain outstanding.
 
 ## 13. Approval scenarios
+
+These are curriculum proposals. Equipment rentals, deliberate invoice-error injection, corrected-invoice flows, and duplicate-invoice exercises are not implemented in the current six-product catalogue.
 
 The workshop should include more than one approval path.
 
@@ -442,7 +372,9 @@ These scenarios teach judgment, not just button clicking.
 
 Ramp Sandbox does not move real money. The event application therefore owns the team's simulated operating cash.
 
-Recommended rule:
+Current behavior deducts the amount when the order is created. There is no separate reservation ledger, automatic rejection/cancellation refund, or cash change during fulfillment.
+
+Target rule (not yet implemented in full):
 
 - Reserve the order amount when the bill is submitted.
 - Release the reservation if the bill is rejected or cancelled.
@@ -453,9 +385,11 @@ Recommended rule:
 Available cash = Starting cash - Reserved unpaid bills - Paid bills
 ```
 
-This prevents a team from placing unlimited orders while several invoices await approval.
+The target rule should prevent overspending while invoices await approval. The current read-then-update balance flow does not serialize concurrent orders.
 
 ## 15. Functional requirements
+
+These are target requirements. In particular, server-side order-submission deduplication, per-business vendor handling, and a next-action status display are not complete.
 
 ### Supplier portal
 
@@ -508,11 +442,11 @@ Show `Waiting for Ramp confirmation`, then use the Admin reconciliation action t
 
 ### Webhook arrives twice
 
-The second delivery finds the event ID already processed and returns success without changing inventory.
+The repeated event ID is deduplicated during storage. Receiving either delivery does not fulfill inventory; manual reconciliation uses the idempotent database function.
 
 ### Bill is rejected
 
-Release the fake-cash reservation, mark the order rejected, and allow the supplier flow to create a corrected order or invoice.
+Current reconciliation marks the order rejected but does not refund cash. Automatic reservation release and a corrected-invoice flow remain requirements. Admin balance adjustment is the current manual tool.
 
 ### Participant pays the wrong bill
 
@@ -523,6 +457,8 @@ Do not fulfill an order unless the paid Ramp bill ID is mapped to it. Surface th
 Pause new order submission, preserve existing orders, and give Admins a documented manual recovery procedure. Do not pretend bills were paid in Ramp.
 
 ## 18. Event operations
+
+This is a proposed runbook. A participant status board, recipe/challenge gameplay, and metrics export are not implemented. Vercel deployment and live Ramp rehearsal are separate upcoming work.
 
 ### Before the event
 
@@ -555,7 +491,7 @@ Pause new order submission, preserve existing orders, and give Admins a document
 - At least 90% of teams complete one full order-to-paid-to-delivered flow without Admin intervention.
 - At least 80% of participants perform at least one meaningful action in Ramp.
 - Median time from order submission to bill visible in Ramp is under 10 seconds.
-- Median time from `bills.paid` delivery to game fulfillment is under 5 seconds.
+- Target median time from `bills.paid` delivery to game fulfillment is under 5 seconds; manual reconciliation does not currently guarantee this.
 - No order is fulfilled twice.
 - No team can spend more fake cash than the game permits.
 - Participants can explain the difference between an invoice, a bill, approval, and payment after the workshop.

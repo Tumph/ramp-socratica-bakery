@@ -4,7 +4,7 @@ import { loadEnvConfig } from "@next/env";
 import { receiveRampWebhook } from "../src/lib/ramp-webhooks";
 
 loadEnvConfig(process.cwd());
-// Expose only the webhook handler through a development tunnel, not the console email UI.
+// Expose only the webhook handler through a development tunnel.
 const server = createServer(async (req, res) => {
   if (req.method !== "POST" || req.url !== "/api/webhooks/ramp") { res.writeHead(404).end(); return; }
   try {
