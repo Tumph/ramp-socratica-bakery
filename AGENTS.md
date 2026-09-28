@@ -43,6 +43,7 @@ The default local URL is `http://localhost:3000`.
 
 - Account creation and login use Supabase email magic links.
 - Supabase owns user identity and session cookies; its email provider settings control delivery.
+- Resend custom SMTP is configured in Supabase with `Socratica Bakery <login@socratica.info>` and the verified `socratica.info` sending domain. The project-wide Auth email limit is 30 emails per hour.
 - Orders and invoices derive team membership from the authenticated session. Never trust a team ID supplied by the browser.
 
 ## Target authentication and team membership
@@ -69,9 +70,9 @@ Supabase Auth owns user identity and sessions. The application owns bakery membe
 
 ## Immediate next steps
 
-1. Finish Resend domain verification and test production magic-link delivery.
-2. Provision Ramp entities, participant roles, and entity-restricted Bill Pay access; run the two-team isolation test before the event.
-3. Deploy a stable webhook endpoint and rehearse the full payment/reconciliation flow.
+1. Provision Ramp entities, participant roles, and entity-restricted Bill Pay access; run the two-team isolation test before the event.
+2. Deploy a stable webhook endpoint and rehearse the full payment/reconciliation flow.
+3. Improve magic-link inbox placement by configuring a branded Supabase Auth custom domain (for example, `auth.socratica.info`) and keeping the Auth template strictly transactional.
 4. Add an automated reconciliation path only if manual Admin reconciliation is no longer sufficient.
 
 ## Security expectations

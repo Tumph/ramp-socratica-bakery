@@ -1,4 +1,4 @@
-# Sandbox integration status: September 25, 2026
+# Sandbox integration status: September 28, 2026
 
 ## Verified against Ramp Sandbox
 
@@ -22,6 +22,12 @@
 - Sandbox payment simulation and its `bills.paid` event.
 - Paid-bill fulfillment using a real Sandbox payment.
 - Participant visibility restrictions across entities.
+
+## Verified supporting operations
+
+- Supabase Auth uses Resend custom SMTP with the verified `socratica.info` domain and has successfully delivered a production magic link from `login@socratica.info`.
+- The project-wide Supabase Auth email rate limit is set to 30 emails per hour.
+- Inbox placement needs follow-up before the event: use a branded Supabase Auth custom domain for magic-link URLs and keep the Auth email template strictly transactional.
 
 ## Deferred operations work
 

@@ -14,7 +14,8 @@
 - Submissions support a title, tagline, write-up, typed project links, images, and a shareable immutable-ID project page.
 - The Admin console manages balances, membership, team merges/archiving/deletion, invitations, deadlines, Admin roles, and manual Ramp reconciliation. A Superadmin manages Admin roles.
 - Webhooks are stored durably and paid bills are verified against Ramp before fulfillment. There is no continuously running reconciliation worker on Vercel Hobby; an Admin triggers reconciliation when needed.
-- Resend SMTP is configured in Supabase, pending verification of the `auth.socratica.info` sending domain.
+- Resend SMTP is configured in Supabase. The `socratica.info` sending domain is verified and production magic-link delivery has been tested successfully from `login@socratica.info`.
+- Supabase Auth has a project-wide rate limit of 30 Auth emails per hour. A branded Supabase Auth custom domain (for example, `auth.socratica.info`) remains a recommended inbox-placement improvement because magic-link URLs otherwise use the shared Supabase hostname.
 
 ## 1. Summary
 

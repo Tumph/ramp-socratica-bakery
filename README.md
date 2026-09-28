@@ -7,6 +7,7 @@ An event prototype where bakery teams order fictional supplies, review/pay match
 - Next.js App Router application with TypeScript.
 - Supabase Postgres owns teams, membership, game cash, inventory, Ramp mappings, orders, and the durable webhook inbox.
 - Supabase Auth provides email magic-link authentication. A signed-in account needs an Admin-assigned bakery team before it can order.
+- Supabase Auth sends magic links through Resend SMTP from `login@socratica.info`; provider credentials stay in the Supabase dashboard, not this repository.
 - Ramp owns vendors, bills, approvals, and payment state. The app verifies an authoritative Ramp bill before inventory is fulfilled.
 
 ## Local setup
@@ -28,6 +29,15 @@ SUPABASE_SECRET_KEY=
 `SUPABASE_SECRET_KEY` is server-only and must start with `sb_secret_`; never commit it or expose it with a `NEXT_PUBLIC_` name.
 
 Open `http://localhost:3000`.
+
+## Auth email delivery
+
+Resend is configured as Supabase Auth's custom SMTP provider. The `socratica.info` sending domain has verified DKIM and return-path SPF records, and a real magic-link request has completed successfully through Supabase.
+
+- The configured sender is `Socratica Bakery <login@socratica.info>`.
+- The Supabase Auth email rate limit is **30 emails per hour for the project**, shared by all recipients.
+- Do not add SMTP credentials or Resend API keys to `.env.local` unless the application begins sending email directly; Auth delivery is configured in **Supabase Dashboard → Authentication → SMTP**.
+- Keep magic-link emails short and transactional. A branded Supabase Auth custom domain such as `auth.socratica.info` remains a recommended deliverability improvement because it replaces the shared `*.supabase.co` link hostname.
 
 ## What is implemented
 
@@ -68,7 +78,7 @@ npm run build
 
 ## Remaining event work
 
-1. Finish Resend domain verification and confirm production magic-link delivery.
-2. Provision Ramp entities and entity-restricted participant permissions; run the two-team isolation test.
-3. Deploy a stable webhook endpoint and rehearse the full payment/reconciliation flow.
+1. Provision Ramp entities and entity-restricted participant permissions; run the two-team isolation test.
+2. Deploy a stable webhook endpoint and rehearse the full payment/reconciliation flow.
+3. Improve magic-link inbox placement: use a branded Supabase Auth custom domain and keep the Auth template strictly transactional.
 4. Add an automated scheduled reconciliation fallback only if manual Admin reconciliation is no longer sufficient.
