@@ -20,4 +20,4 @@ npm run lint
 npm run build
 ```
 
-See [the simulator plan](./docs/mock-card-simulator-plan.md) for API contracts, data model, authorization, and acceptance checks.
+See [the system reference](./docs/system-reference.md) and [the mock-finance API](./docs/mock-finance-api.md).

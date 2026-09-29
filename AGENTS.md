@@ -57,6 +57,6 @@ Supabase Auth owns user identity and sessions. The application owns bakery membe
 
 - Apply Supabase schema changes through reviewed migrations and keep RLS enabled on public tables.
 - Keep trusted Supabase access behind `src/lib/supabase/`.
-- The detailed simulator contract and retirement plan is in `docs/mock-card-simulator-plan.md`.
+- The current architecture is in `docs/system-reference.md`; the frontend API contract is in `docs/mock-finance-api.md`.
 - Before modifying Next.js conventions, consult the versioned documentation in `node_modules/next/dist/docs/` as required by the generated rules above.
 - Run both `npm run lint` and `npm run build` before handing off changes.
