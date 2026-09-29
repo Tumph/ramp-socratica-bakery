@@ -22,6 +22,19 @@ export default function AuthCallbackPage() {
         setError("That sign-in link is invalid or has expired. Please request a new one.");
         return;
       }
+      const invite = new URLSearchParams(window.location.search).get("invite");
+      if (invite) {
+        const response = await fetch("/api/invitations/accept", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: invite }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          setError(data.error ?? "Your team invitation could not be accepted.");
+          return;
+        }
+      }
       window.location.replace("/");
     }
 

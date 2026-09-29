@@ -39,8 +39,8 @@ The default local URL is `http://localhost:3000`.
 Supabase Auth owns user identity and sessions. The application owns bakery membership and authorization:
 
 1. Participants sign in with a magic link.
-2. They create or join one bakery team.
-3. Teams have 3–6 participants. Participants cannot leave or switch teams themselves.
+2. An Admin creates teams and emails team-bound magic-link invitations to participants.
+3. An invitation signs the recipient in and adds that recipient email to its selected team. Teams have 3–6 participants. Participants cannot leave, switch, create, or choose teams themselves. CSV invitation import is planned but not implemented.
 4. Active team members may rename their team and edit its submission before the deadline.
 5. Admins adjust shared funds, reassign/remove participants, merge order-free teams, archive eligible empty teams, and manage the event deadline. Superadmins additionally manage Admin roles.
 

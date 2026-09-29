@@ -185,7 +185,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid color-mix(in srgb, va
 .dialogActions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
 @media (max-width: 800px) { .teamSetup { margin: 0; } .teamDirectory { padding: 20px; } .teamDirectoryHeader { align-items: stretch; flex-direction: column; } .teamDirectoryHeader .primary { width: 100%; } }
 
-.adminControls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.adminControls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.inviteForm { display: flex; align-items: end; gap: 12px; margin: 18px 0; }
+.inviteForm label { flex: 1; }
 .adminCard { display: grid; align-content: start; gap: 10px; }
 .adminCard form { max-width: 420px; }
 .adminTablePanel, .teamManagementPanel, .accessPanel { padding: 28px; }
@@ -210,7 +212,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid color-mix(in srgb, va
 .accessGrid form { align-content: start; }
 .tableError { display: block; color: #a22e1b; line-height: 1.4; margin-top: 6px; max-width: 260px; }
 .quantity output { min-width: 20px; text-align: center; font-weight: 800; }
-@media (max-width: 800px) { .adminControls, .managementGrid, .accessGrid, .balanceForm { grid-template-columns: 1fr; } .teamManagementHeader { align-items: start; flex-direction: column; } .teamDangerZone { border-left: 0; border-top: 1px solid var(--line); padding: 22px 0 0; } }
+@media (max-width: 800px) { .adminControls, .managementGrid, .accessGrid, .balanceForm { grid-template-columns: 1fr; } .inviteForm { align-items: stretch; flex-direction: column; } .teamManagementHeader { align-items: start; flex-direction: column; } .teamDangerZone { border-left: 0; border-top: 1px solid var(--line); padding: 22px 0 0; } }
 
 .secondary:disabled, .dangerButton:disabled, .linkButton:disabled { opacity: .5; cursor: not-allowed; }
 .linkButton:disabled { text-decoration: none; }

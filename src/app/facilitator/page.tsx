@@ -13,12 +13,13 @@ export default async function FacilitatorPage() {
   const { data } = await createAdminClient().from("orders").select("id, invoice_number, status, total_cents, error_message, created_at, teams!inner(name,event_id)").eq("teams.event_id", EVENT_ID).order("created_at", { ascending: false }).limit(100);
   const orders = (data ?? []).map((order) => ({ ...order, team_name: (order.teams as unknown as { name: string }).name })) as FacilitatorOrder[];
   const db = createAdminClient();
-  const [{ data: event }, { data: teamRows }, { data: funds }, { data: memberships }, { data: adminRows }, { data: orderTeams }] = await Promise.all([
+  const [{ data: event }, { data: teamRows }, { data: funds }, { data: memberships }, { data: invitations }, { data: adminRows }, { data: orderTeams }] = await Promise.all([
     db.from("events").select("submission_deadline_at").eq("id", EVENT_ID).single(),
     db.from("teams").select("id,name,status,available_cash_cents,owner_user_id,created_at").eq("event_id", EVENT_ID).order("created_at"),
     db.from("team_funds").select("team_id,available_cents"),
     db.from("team_members").select("id,team_id,user_id,role,profiles!inner(email)").eq("event_id", EVENT_ID).is("left_at", null),
-    db.from("event_admins").select("role,profiles!inner(email)").eq("event_id", EVENT_ID),
+    db.from("team_invitations").select("id,team_id,email,expires_at").eq("event_id", EVENT_ID).is("accepted_at", null).is("revoked_at", null).gt("expires_at", new Date().toISOString()).order("created_at"),
+    db.from("event_admins").select("user_id,role,profiles!inner(email)").eq("event_id", EVENT_ID),
     db.from("orders").select("team_id"),
   ]);
   const orderCounts = new Map<string, number>();
@@ -29,6 +30,7 @@ export default async function FacilitatorPage() {
     available_cash_cents: fundBalances.get(team.id) ?? 0,
     orderCount: orderCounts.get(team.id) ?? 0,
     members: (memberships ?? []).filter((member) => member.team_id === team.id).map((member) => ({ id: member.id, user_id: member.user_id, role: member.role as "OWNER" | "MEMBER", email: (member.profiles as unknown as { email: string }).email })),
+    pendingInvitations: (invitations ?? []).filter((invitation) => invitation.team_id === team.id).map((invitation) => ({ id: invitation.id, email: invitation.email, expires_at: invitation.expires_at })),
   }));
   const admins: AdminRecord[] = (adminRows ?? []).map((record) => ({ role: record.role as "ADMIN" | "SUPERADMIN", email: (record.profiles as unknown as { email: string }).email }));
 
