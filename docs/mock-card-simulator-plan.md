@@ -126,87 +126,10 @@ Enable RLS on all new public tables. Do not grant direct browser writes. Reads s
 
 Only perform this deletion after a mock-card purchase can create an order, transaction, ledger entry, and inventory update in one transaction, and after the Admin funding/revocation flows work.
 
-## Retirement inventory
-
-### Delete application code and tests
-
-| Path | Why it is removed |
-|---|---|
-| `src/lib/ramp.ts` | OAuth, Ramp API calls, vendor lookup, draft-bill creation, and invoice attachment are no longer used. |
-| `src/lib/ramp-sync.ts` | Bill creation, verification, status mapping, and paid-bill fulfillment are replaced by the local atomic purchase function. |
-| `src/lib/ramp-webhooks.ts` | The simulator does not receive provider webhooks. |
-| `src/app/api/webhooks/ramp/route.ts` | Removes the provider webhook endpoint. |
-| `tests/ramp-webhooks.test.ts` | Tests only the retired webhook-signature behavior. |
-| `scripts/ramp-order.ts` | Retires CLI reconciliation. |
-| `scripts/ramp-webhook-server.ts` | Retires local webhook testing. |
-| `scripts/setup-ramp-supplier.ts` | Retires Sandbox supplier setup. |
-| `scripts/setup-ramp-webhook.ts` | Retires webhook subscription setup. |
-| `scripts/remove-ramp-webhook.ts` | Retires webhook teardown. |
-| `docs/ramp-integration-status.md` | Superseded by simulator implementation/acceptance documentation. |
-
-### Replace, not simply delete
-
-| Current surface | Replacement |
-|---|---|
-| `src/lib/orders.ts` | Atomic local mock-card purchase implementation. |
-| `src/app/api/orders/[id]/route.ts` | Return mock transaction data instead of `ramp_bill_id` and `ramp_status`. |
-| `src/app/api/facilitator/orders/route.ts` | Return transaction/fund status instead of Ramp bill fields. |
-| `src/app/api/admin/route.ts` | Remove `reconcile_ramp`; add fund/card simulator operations. |
-| `src/components/Storefront.tsx` | Replace “Creating Ramp bill” and Ramp instructions with transaction confirmation. |
-| `src/components/AdminConsole.tsx` | Replace “Reconcile Ramp now” with fund, card, and demo-transaction controls. |
-| `src/components/FacilitatorOrders.tsx` | Show local transaction state and transaction reference. |
-| `src/app/page.tsx` | Replace Ramp copy in checkout/product messaging. |
-| `src/app/layout.tsx` | Update description and any remaining Ramp-specific terminology. |
-| `src/app/invoices/[id]/page.tsx` | Keep as a fictional supplier receipt only if still useful; remove payment terms and Ramp framing. |
-| `README.md`, `PRD.md`, `AGENTS.md`, `docs/codebase-audit.md` | Rewrite architecture, commands, product flow, known gaps, and next steps around the simulator. |
-| `package.json` | Remove `ramp:reconcile` and `ramp:webhook-server` scripts. |
-
-### Delete or migrate database objects through reviewed Supabase migrations
-
-- `public.team_ramp_entities`
-- `public.order_ramp_sync`
-- Ramp-specific columns on `public.orders`, including `ramp_bill_id` and `ramp_status`
-- `public.webhook_events`
-- `public.ramp_webhook_challenges`
-- `public.fulfill_paid_order(target_bill_id uuid)` and any Ramp-only triggers/functions
-- Ramp-only constraints, indexes, RLS policies, and grants
-
-Do not drop `orders`, `order_lines`, `inventory`, team membership, or team-submission data. They remain event-domain records and should be adapted to reference `mock_transactions`.
-
-### Remove from deployment configuration
-
-After application code no longer references them, remove these secrets and settings from local, Vercel, and Supabase environments:
-
-```text
-RAMP_API_BASE_URL
-RAMP_CLIENT_ID
-RAMP_CLIENT_SECRET
-RAMP_SCOPES
-RAMP_ACCESS_TOKEN
-RAMP_VENDOR_ID
-RAMP_WEBHOOK_SECRET
-RAMP_BUSINESS_ID
-RAMP_WEBHOOK_ID
-RAMP_WEBHOOK_SETUP_TOKEN
-RAMP_WEBHOOK_URL
-```
-
-Remove any external Ramp webhook subscription only after the application endpoint and local setup scripts have been retired.
-
 ## Acceptance checks
 
-1. Admin funds a team and all active members receive a mock card.
-2. A valid card purchase lowers the shared balance once, creates exactly one transaction and ledger entry set, creates an order, and adds inventory.
-3. Retrying the same checkout request does not create another charge, order, or inventory increment.
-4. Simultaneous purchases cannot reduce the fund below zero.
-5. A declined purchase creates a declined transaction but no posted debit, order, or inventory.
-6. A frozen, revoked, former-member, or wrong-team card cannot spend.
-7. A refund/reversal restores the correct amount once and leaves an audit trail.
-8. Participants cannot read another participant's card transactions; Admins can read all event data.
-9. No deployed route, runtime code, script, test, environment variable, or participant-facing copy depends on Ramp.
-
-## Sources informing the model
-
-- Stripe Issuing distinguishes authorizations from settled transactions, including pending, closed, expired, and reversed authorization states: <https://docs.stripe.com/api/issuing/authorizations?lang++=curl>
-- Stripe describes capture as releasing the authorization hold and creating a transaction that reduces balance: <https://docs.stripe.com/issuing/purchases/transactions>
-- Supabase recommends database functions for data-intensive operations and documents secure function execution and RLS requirements: <https://supabase.com/docs/guides/database/functions> and <https://supabase.com/docs/guides/database/postgres/row-level-security>
+1. Admin funding creates an auditable fund balance.
+2. A valid card purchase creates exactly one order, transaction, ledger entry, and inventory update.
+3. Retried or simultaneous purchases cannot duplicate charges or overspend the fund.
+4. Former members and frozen cards cannot spend.
+5. Participants can read only their own card transactions; Admins can read event-wide financial data.

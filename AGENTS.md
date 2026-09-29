@@ -8,24 +8,19 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# Ramp Socratica Bakery project guide
+# Socratica Bakery project guide
 
 ## Product purpose
 
-This repository contains an event prototype where teams pretend to run local bakeries. Participants order fake wholesale baking supplies, receive matching bills in Ramp Sandbox, review and pay those bills, and receive supplies in the event application after Ramp reports payment.
-
-Read `PRD.md` for the complete product proposal and `README.md` for setup instructions.
+This repository contains an event prototype where bakery teams buy fictional wholesale supplies with workshop-only cards connected to one shared team fund. It has no connection to a payment network or external financial API.
 
 ## Current architecture
 
 - Next.js App Router application with TypeScript.
-- Supplier storefront, API routes, printable invoices, and Admin console live in one app.
-- Supabase Postgres stores game state, inventory, team membership, Ramp mappings, and the durable webhook inbox.
+- Supplier storefront, printable receipts, and Admin console live in one app.
+- Supabase Postgres stores team membership, shared funds, nonfunctional mock cards, local transactions, immutable ledger entries, orders, and inventory.
 - Supabase Auth provides email magic-link identity and sessions.
-- Ramp Sandbox orders create drafts with attached PDF invoices so participants can review and submit them in Ramp.
-- A signed webhook receiver records events in Supabase. Receipt does not trigger fulfillment. An Admin uses manual Ramp reconciliation as the current payment-processing path; no worker drains the inbox yet. Stable webhook deployment and automatic event processing remain planned.
-- The event database owns fake cash, inventory, and game state. Ramp owns vendors, bills, approvals, and payment state.
-- Runtime Ramp configuration supports one Sandbox business and supplier, with per-team entity mappings.
+- Supplier checkout runs an atomic local purchase function: it validates the active cardholder, deducts the shared fund, records the transaction, and fulfills inventory.
 
 ## Common commands
 
@@ -35,68 +30,33 @@ npm run dev
 npm test
 npm run lint
 npm run build
-npm run ramp:reconcile
 ```
 
 The default local URL is `http://localhost:3000`.
 
-## Authentication today
+## Authentication and team membership
 
-- Account creation and login use Supabase email magic links.
-- Supabase owns user identity and session cookies; its email provider settings control delivery.
-- The September 28 operations record reports Resend custom SMTP in Supabase with `Socratica Bakery <login@socratica.info>`, a verified `socratica.info` sending domain, and a project-wide Auth email limit of 30 emails per hour. These are external provider settings; verify them before event-scale login.
-- Orders and invoices derive team membership from the authenticated session. Never trust a team ID supplied by the browser.
+Supabase Auth owns user identity and sessions. The application owns bakery membership and authorization:
 
-## Target authentication and team membership
+1. Participants sign in with a magic link.
+2. They create or join one bakery team.
+3. Teams have 3–6 participants. Participants cannot leave or switch teams themselves.
+4. Active team members may rename their team and edit its submission before the deadline.
+5. Admins adjust shared funds, reassign/remove participants, merge order-free teams, archive eligible empty teams, and manage the event deadline. Superadmins additionally manage Admin roles.
 
-Supabase Auth with email magic links is implemented. Account creation and authentication are separate from bakery-team membership:
+## Workshop-finance rules
 
-1. A participant creates an account through Supabase Auth using an email magic link.
-2. They join a bakery team only after account creation.
-3. Teams have 3–6 participants. A user can have one active team per event; creation and joining use an invite link. Participants cannot leave, switch, delete, or merge teams themselves.
-4. Active team members may rename their team and edit its submission until the deadline. The latest saved content freezes at the deadline.
-5. Admins can adjust balances, reassign/remove participants, create invites, merge order-free teams, archive/delete eligible empty teams, and manually reconcile Ramp orders. Superadmins additionally manage Admin roles.
-
-Supabase Auth owns user identity and sessions. The application owns bakery membership and authorization: derive team membership server-side, deny orders from users without a team, and scope all participant data to the authenticated user's assigned team.
-
-## Ramp integration notes
-
-- Use Ramp draft-bill endpoints for the workshop. The regular bill-creation endpoint auto-approves bills and bypasses the intended participant review step.
-- Generate and attach a PDF invoice before participants submit the draft in Ramp. Ramp draft request amounts use major currency units; Ramp response amounts use cents.
-- Only an authoritative Ramp bill with `status=PAID` and `status_summary=PAYMENT_COMPLETED` may fulfill inventory. A webhook is a signal to fetch and verify that bill, never sufficient evidence on its own.
-- Webhook processing must be durable and idempotent. Save the verified event before returning success; a trusted reconciliation path fetches the provider bill before fulfillment. Reconciliation is the fallback for missed events.
-- A local webhook test needs an HTTPS tunnel. Remove temporary subscriptions before closing the tunnel. The event needs a stable public URL; an Admin can manually reconcile while automated reconciliation is deferred.
-- Ramp Sandbox's `pay current bill` demo action marks an eligible bill paid immediately. When Ramp requires scheduling first, schedule the fictional payment for today, then use the demo action. Do not use `Paid manually` for the participant-facing payment demonstration.
-- Each event team needs an explicit `team_ramp_entities` mapping before it can create a Sandbox order. Never fall back to a shared default entity.
-
-## Audit findings and implementation limits
-
-Read `docs/codebase-audit.md` before treating target behavior as implemented. The live Supabase database has base tables, RLS, membership constraints, and atomic fulfillment; local migrations contain only part of its Postgres history and have different version timestamps. They are not legacy SQLite files.
-
-Current gaps include nontransactional order/cash writes, rejected-order refunds, invite context lost during login, team renaming after the deadline, concurrent invite acceptance/team-size checks, and an RLS helper that does not exclude former members. Submission writes are also nontransactional. No database changes were made during the audit.
-
-Ramp isolation/payment rehearsal is paused while the demo site has issues. Stable endpoint deployment is planned separately on Vercel.
-
-## Immediate next steps
-
-1. Provision Ramp entities, participant roles, and entity-restricted Bill Pay access; run the two-team isolation test before the event.
-2. Deploy a stable webhook endpoint and rehearse the full payment/reconciliation flow.
-3. Improve magic-link inbox placement by configuring a branded Supabase Auth custom domain (for example, `auth.socratica.info`) and keeping the Auth template strictly transactional.
-4. Add an automated reconciliation path only if manual Admin reconciliation is no longer sufficient.
-
-## Security expectations
-
-- Never commit API keys, OAuth tokens, webhook secrets, email-provider credentials, or production session secrets.
-- Keep all provider credentials server-side in environment variables.
-- Authentication codes and tokens must be short-lived, one-time where applicable, rate-limited, and stored securely according to the chosen provider's guidance.
-- Use cryptographically secure randomness for application-managed tokens.
-- Verify Ramp webhook signatures from the exact raw request bytes.
-- Make payment fulfillment idempotent; webhook retries must not duplicate inventory.
-- Scope all participant data access to the authenticated user's team.
+- Every active team has one shared CAD fund.
+- Every active member receives one nonfunctional mock card. Store only display identifiers such as `BAKE-...`; never store a PAN, CVV, or expiry date.
+- Checkout totals are calculated server-side from the catalogue.
+- All fund changes must create an immutable ledger entry.
+- The purchase function must remain atomic and idempotent: lock the fund before spending and never trust browser-supplied totals.
+- Card, fund, transaction, and ledger reads go through trusted application APIs; do not grant browser roles direct write access.
 
 ## Implementation notes
 
-- Apply Supabase schema changes through reviewed Supabase migrations and keep RLS enabled on public tables.
-- Keep Ramp-specific calls behind `src/lib/ramp.ts` and trusted Supabase access behind `src/lib/supabase/`.
+- Apply Supabase schema changes through reviewed migrations and keep RLS enabled on public tables.
+- Keep trusted Supabase access behind `src/lib/supabase/`.
+- The detailed simulator contract and retirement plan is in `docs/mock-card-simulator-plan.md`.
 - Before modifying Next.js conventions, consult the versioned documentation in `node_modules/next/dist/docs/` as required by the generated rules above.
 - Run both `npm run lint` and `npm run build` before handing off changes.
