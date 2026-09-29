@@ -31,22 +31,20 @@ export function FacilitatorOrders({ initialOrders }: { initialOrders: Facilitato
   }
 
   return (
-    <section className="panel tablePanel">
-      <div className="tableHeader">
-        <div><p className="eyebrow">Live operations</p><h2>Recent orders</h2></div>
-        <button className="secondary" onClick={refresh}>Refresh</button>
-      </div>
-      {error && <p className="error">{error}</p>}
-      <div className="orderTable">
-        {orders.length === 0 ? <p>No orders yet.</p> : orders.map((order) => (
-          <article key={order.id} className="orderRow">
-            <div><strong>{order.invoice_number}</strong><small>{order.team_name}</small></div>
-            <div><span className={`status status-${order.status.toLowerCase()}`}>{order.status.replaceAll("_", " ")}</span></div>
-            <div><strong>{money.format(order.total_cents / 100)}</strong><small>{order.ramp_bill_id ?? "No bill ID"}</small></div>
-            {order.error_message && <p className="error">{order.error_message}</p>}
-          </article>
-        ))}
-      </div>
+    <section className="panel tablePanel" aria-labelledby="recent-orders-heading">
+      <header className="tableHeader">
+        <div><p className="eyebrow">Live operations</p><h2 id="recent-orders-heading">Recent orders</h2><p className="mutedCopy">The latest supplier orders and their Ramp state.</p></div>
+        <button className="secondary" type="button" onClick={refresh}>Refresh</button>
+      </header>
+      {error && <p className="error" role="alert">{error}</p>}
+      <div className="tableScroll"><table className="ordersTable">
+        <thead><tr><th scope="col">Invoice</th><th scope="col">Team</th><th scope="col">Status</th><th scope="col">Amount</th><th scope="col">Ramp bill</th></tr></thead>
+        <tbody>{orders.length === 0 ? <tr><td className="tableMessage" colSpan={5}>No orders yet.</td></tr> : orders.map((order) => (
+          <tr key={order.id}>
+            <th scope="row">{order.invoice_number}</th><td>{order.team_name}</td><td><span className={`status status-${order.status.toLowerCase()}`}>{order.status.replaceAll("_", " ")}</span>{order.error_message && <small className="tableError">{order.error_message}</small>}</td><td>{money.format(order.total_cents / 100)}</td><td>{order.ramp_bill_id ?? "—"}</td>
+          </tr>
+        ))}</tbody>
+      </table></div>
     </section>
   );
 }

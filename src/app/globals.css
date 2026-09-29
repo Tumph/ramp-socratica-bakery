@@ -160,3 +160,57 @@ input:focus, select:focus, textarea:focus { outline: 2px solid color-mix(in srgb
   .invoicePage { padding: 0; }
   .invoiceSheet { box-shadow: none; }
 }
+
+button:focus-visible, a:focus-visible { outline: 3px solid color-mix(in srgb, var(--orange), white 20%); outline-offset: 2px; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.teamSetup { max-width: 920px; margin: 6vh auto; }
+.teamSetupIntro { max-width: 650px; margin-bottom: 36px; }
+.teamSetupIntro h1 { font-size: clamp(42px, 6vw, 68px); }
+.teamSetupIntro > p:last-child { color: var(--muted); font-size: 18px; line-height: 1.6; }
+.teamDirectory { padding: 28px; }
+.teamDirectoryHeader { display: flex; align-items: start; justify-content: space-between; gap: 24px; margin-bottom: 20px; }
+.teamDirectoryHeader h2 { margin-bottom: 6px; }
+.tableScroll { overflow-x: auto; }
+.teamTable { min-width: 520px; }
+.teamTable th, .teamTable td { padding: 16px; vertical-align: middle; }
+.teamTable thead th { color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.teamTable tbody tr:hover { background: color-mix(in srgb, var(--cream), transparent 68%); }
+.teamTable tbody th { font-weight: 800; }
+.teamTableAction { width: 1%; white-space: nowrap; }
+.tableMessage { color: var(--muted); text-align: left !important; }
+.dialogBackdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 24px; background: rgba(32, 29, 24, .48); }
+.dialogPanel { width: min(100%, 480px); padding: 28px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); box-shadow: 0 20px 60px rgba(30, 25, 15, .28); }
+.dialogPanel h2 { margin-bottom: 8px; }
+.dialogPanel form { margin-top: 24px; }
+.dialogActions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+@media (max-width: 800px) { .teamSetup { margin: 0; } .teamDirectory { padding: 20px; } .teamDirectoryHeader { align-items: stretch; flex-direction: column; } .teamDirectoryHeader .primary { width: 100%; } }
+
+.adminControls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.adminCard { display: grid; align-content: start; gap: 10px; }
+.adminCard form { max-width: 420px; }
+.adminTablePanel, .teamManagementPanel, .accessPanel { padding: 28px; }
+.adminTablePanel .tableHeader, .tablePanel .tableHeader { align-items: start; gap: 24px; margin-bottom: 20px; }
+.adminTable, .ordersTable, .membersTable, .accessTable { min-width: 680px; }
+.adminTable th, .adminTable td, .ordersTable th, .ordersTable td, .membersTable th, .membersTable td, .accessTable th, .accessTable td { padding: 14px 16px; vertical-align: middle; }
+.adminTable thead th, .ordersTable thead th, .membersTable thead th, .accessTable thead th { color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.adminTable tbody tr:hover, .ordersTable tbody tr:hover, .membersTable tbody tr:hover, .accessTable tbody tr:hover { background: color-mix(in srgb, var(--cream), transparent 68%); }
+.adminTable tbody tr.isSelected { background: color-mix(in srgb, var(--cream), transparent 38%); }
+.teamManagementPanel { display: grid; gap: 24px; }
+.teamManagementHeader { display: flex; align-items: start; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+.teamManagementHeader h2 { margin-bottom: 6px; }
+.managementGrid, .accessGrid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(220px, .8fr); gap: 28px; }
+.balanceForm { grid-template-columns: 1fr 1.4fr auto; align-items: end; gap: 10px; }
+.balanceForm h3 { grid-column: 1 / -1; margin: 0; }
+.teamDangerZone { border-left: 1px solid var(--line); padding-left: 28px; }
+.teamDangerZone h3, .membersSection h3 { font: 24px Georgia, serif; margin-bottom: 8px; }
+.membersSection { border-top: 1px solid var(--line); padding-top: 24px; }
+.membersSection > header { margin-bottom: 14px; }
+.membersTable select { min-width: 200px; padding: 9px; }
+.accessPanel > header { margin-bottom: 20px; }
+.accessGrid form { align-content: start; }
+.tableError { display: block; color: #a22e1b; line-height: 1.4; margin-top: 6px; max-width: 260px; }
+.quantity output { min-width: 20px; text-align: center; font-weight: 800; }
+@media (max-width: 800px) { .adminControls, .managementGrid, .accessGrid, .balanceForm { grid-template-columns: 1fr; } .teamManagementHeader { align-items: start; flex-direction: column; } .teamDangerZone { border-left: 0; border-top: 1px solid var(--line); padding: 22px 0 0; } }
+
+.secondary:disabled, .dangerButton:disabled, .linkButton:disabled { opacity: .5; cursor: not-allowed; }
+.linkButton:disabled { text-decoration: none; }

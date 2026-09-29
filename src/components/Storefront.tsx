@@ -105,9 +105,9 @@ export function Storefront({ products }: { products: Product[] }) {
                 <strong>{money.format(product.priceCents / 100)} / {product.unit}</strong>
               </div>
               <div className="quantity" aria-label={`${product.name} quantity`}>
-                <button onClick={() => setQuantities({ ...quantities, [product.id]: Math.max(0, quantity - 1) })}>−</button>
-                <span>{quantity}</span>
-                <button onClick={() => setQuantities({ ...quantities, [product.id]: Math.min(20, quantity + 1) })}>+</button>
+                <button type="button" aria-label={`Decrease ${product.name} quantity`} onClick={() => setQuantities({ ...quantities, [product.id]: Math.max(0, quantity - 1) })}>−</button>
+                <output aria-live="polite">{quantity}</output>
+                <button type="button" aria-label={`Increase ${product.name} quantity`} onClick={() => setQuantities({ ...quantities, [product.id]: Math.min(20, quantity + 1) })}>+</button>
               </div>
             </article>
           );
@@ -121,7 +121,7 @@ export function Storefront({ products }: { products: Product[] }) {
         </div>
         <div className="total"><span>Invoice total</span><strong>{money.format(total / 100)}</strong></div>
         {error && <p className="error">{error}</p>}
-        <button className="primary" disabled={total === 0 || submitting} onClick={submitOrder}>
+        <button className="primary" type="button" disabled={total === 0 || submitting} onClick={submitOrder}>
           {submitting ? "Creating Ramp bill…" : "Place order on account"}
         </button>
       </aside>
