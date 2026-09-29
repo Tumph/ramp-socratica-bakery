@@ -26,7 +26,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
           {lines.map((line) => <tr key={line.product_name}><td>{line.product_name}</td><td>{line.quantity}</td><td>{money.format(line.unit_price_cents / 100)}</td><td>{money.format(line.unit_price_cents * line.quantity / 100)}</td></tr>)}
         </tbody></table>
         <div className="invoiceTotal"><span>Amount due</span><strong>{money.format(order.total_cents / 100)}</strong></div>
-        <p className="invoiceNote">This is a fictional invoice for the Ramp Socratica bakery workshop. No real goods or money are involved.</p>
+        <p className="invoiceNote">This is a fictional invoice for the Socratica bakery workshop. No real goods or money are involved.</p>
       </section>
     </main>
   );

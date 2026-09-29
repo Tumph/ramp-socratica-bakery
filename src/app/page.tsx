@@ -19,8 +19,8 @@ export default async function Home() {
       <section className="hero">
         <div>
           <p className="eyebrow">Wholesale ingredients · Toronto</p>
-          <h1>Stock your bakery.<br />Pay the invoice in Ramp.</h1>
-          <p className="heroCopy">Choose what your team needs. We will send the bill to your Ramp Sandbox account and deliver after payment.</p>
+          <h1>Stock your bakery.<br />Spend from your shared fund.</h1>
+          <p className="heroCopy">Choose what your team needs. Your workshop card posts a simulated purchase and delivers supplies immediately.</p>
         </div>
         <div className="terms"><span>Account terms</span><strong>Net 7</strong><small>Invoices due within seven days</small></div>
       </section>

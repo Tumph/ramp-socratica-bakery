@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Socratica Bakery Supply",
-  description: "A Ramp Bill Pay workshop for bakery teams.",
+  description: "A workshop card-fund simulator for bakery teams.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

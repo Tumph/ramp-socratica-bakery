@@ -2,10 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { EVENT_ID, getCurrentAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { syncRampOrder } from "@/lib/ramp-sync";
 
 const requestSchema = z.object({
-  action: z.enum(["set_balance", "reassign_member", "remove_member", "merge_teams", "archive_team", "set_deadline", "set_admin", "reconcile_ramp"]),
+  action: z.enum(["set_balance", "reassign_member", "remove_member", "merge_teams", "archive_team", "set_deadline", "set_admin"]),
   teamId: z.string().uuid().optional(),
   sourceTeamId: z.string().uuid().optional(),
   destinationTeamId: z.string().uuid().optional(),
@@ -39,7 +38,7 @@ export async function POST(request: Request) {
     if (input.action === "set_balance") {
       if (!input.teamId || input.balanceCents === undefined) throw new Error("Team and balance are required.");
       await requireEventTeam(input.teamId);
-      ({ error } = await admin.rpc("admin_set_team_balance", { target_team_id: input.teamId, target_balance_cents: input.balanceCents, adjustment_reason: input.reason ?? "Admin balance update", actor_user_id: actor.id }));
+      ({ error } = await admin.rpc("admin_set_team_fund", { target_team_id: input.teamId, target_balance_cents: input.balanceCents, adjustment_reason: input.reason ?? "Admin balance update", actor_user_id: actor.id }));
     } else if (input.action === "reassign_member") {
       if (!input.membershipId || !input.destinationTeamId) throw new Error("Participant and destination team are required.");
       await Promise.all([requireEventMember(input.membershipId), requireEventTeam(input.destinationTeamId)]);
@@ -65,14 +64,6 @@ export async function POST(request: Request) {
       const { data: profile } = await admin.from("profiles").select("id").eq("email", input.email.toLowerCase()).maybeSingle();
       if (!profile) throw new Error("That person must sign in once before becoming an admin.");
       ({ error } = await admin.rpc("admin_set_event_admin", { target_event_id: EVENT_ID, target_user_id: profile.id, target_role: input.role === "REMOVE" ? null : input.role }));
-    } else if (input.action === "reconcile_ramp") {
-      const { data: orders, error: ordersError } = await admin.from("orders").select("id,teams!inner(event_id)").eq("teams.event_id", EVENT_ID).neq("status", "FULFILLED").order("created_at");
-      if (ordersError) throw new Error(ordersError.message);
-      let synced = 0; let failed = 0;
-      for (const order of orders ?? []) {
-        try { await syncRampOrder(order.id); synced += 1; } catch { failed += 1; }
-      }
-      return NextResponse.json({ ok: true, message: `Checked ${synced + failed} unfinished orders; ${synced} synchronized${failed ? `, ${failed} need review` : ""}.` });
     }
 
     if (error) throw new Error(error.message);
