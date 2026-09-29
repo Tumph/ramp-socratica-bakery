@@ -2,12 +2,14 @@ import { Storefront } from "@/components/Storefront";
 import { AuthFlow } from "@/components/AuthFlow";
 import { AccountBar } from "@/components/AccountBar";
 import { catalog } from "@/lib/catalog";
-import { getAuthenticatedUser, getCurrentUser } from "@/lib/auth";
+import { getAuthenticatedUser, getCurrentAdmin, getCurrentUser } from "@/lib/auth";
 import { TeamSetup } from "@/components/TeamSetup";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
+  if (await getCurrentAdmin()) redirect("/admin");
   const user = await getCurrentUser();
   if (!user) return <main>{await getAuthenticatedUser() ? <TeamSetup /> : <AuthFlow />}</main>;
 

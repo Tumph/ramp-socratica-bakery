@@ -87,7 +87,6 @@ input, select { width: 100%; border: 1px solid var(--line); border-radius: 8px; 
 textarea { width: 100%; min-height: 180px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; padding: 13px 14px; background: white; color: var(--ink); font: inherit; line-height: 1.5; }
 input:focus, select:focus, textarea:focus { outline: 2px solid color-mix(in srgb, var(--green), transparent 70%); border-color: var(--green); }
 .authHelp { color: var(--muted); line-height: 1.5; }
-.inviteLink { padding: 12px; background: #fff3c9; border-radius: 7px; color: #674d00; overflow-wrap: anywhere; }
 .linkButton { border: 0; background: transparent; color: var(--green); text-decoration: underline; cursor: pointer; }
 .accountBar { margin-bottom: 18px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); display: flex; align-items: center; justify-content: space-between; }
 .accountBar div { display: flex; gap: 10px; align-items: baseline; }

@@ -6,7 +6,7 @@ An event prototype where bakery teams order fictional supplies, review/pay match
 
 - Next.js App Router application with TypeScript.
 - Supabase Postgres owns teams, membership, game cash, inventory, Ramp mappings, orders, and the durable webhook inbox. There is no SQLite runtime.
-- Supabase Auth provides email magic-link authentication. After signing in, participants create a team or accept an invitation; Admin assignment is also available.
+- Supabase Auth provides email magic-link authentication. After signing in, participants create a team or join an open team; Admin assignment is also available.
 - Ramp integration uses one configured Sandbox business and supplier, with an explicit entity mapping for each team. Multi-business credentials are not implemented.
 - Ramp owns vendors, bills, approvals, and payment state. The app fetches and validates the authoritative bill before inventory fulfillment.
 - The webhook receiver is implemented; stable deployment and an automatic event-processing path are planned. Currently, receiving an event records it without triggering delivery. The Admin console and CLI reconcile orders on demand.
@@ -50,16 +50,16 @@ Inbox placement and event arrival capacity still need verification. The operatio
 ## Implemented behavior
 
 - Supplier catalogue, available-cash deduction at order creation, printable/downloadable invoices, and Ramp draft creation with attached PDFs
-- Magic-link authentication, self-service team creation, and owner/Admin-created invitations
-- One active team per participant per event, with a database team-size check; teams may have fewer than three members while forming
+- Magic-link authentication, self-service team creation, and an authenticated directory of open teams
+- One active team per participant per event, with a serialized database team-size check; teams may have fewer than three members while forming
 - Shop access after the submission deadline for teams with at least three active members and a submission row
 - Project title, tagline, plain-text write-up, typed links, images, and public project pages with stable IDs
 - Submission and image endpoints reject edits after the deadline
-- Admin controls for balances, memberships, order-free team merges, empty-team archiving/deletion, invitations, deadlines, and reconciliation; Superadmins manage Admin roles
+- Admin controls for balances, membership reassignment/removal, order-free team merges, empty-team soft deletion, deadlines, and reconciliation; Superadmins manage Admin roles
 - Signed webhook storage and authoritative bill validation during manual reconciliation
 - Atomic, idempotent inventory fulfillment in Supabase
 
-Known gaps include concurrent cash reservation, rejected-order refunds, invite preservation through login, team-name deadline enforcement, and RLS membership revocation. These are recorded in [the audit](./docs/codebase-audit.md); the feature list does not imply they are solved.
+Known gaps include concurrent cash reservation, rejected-order refunds, and team-name deadline enforcement. These are recorded in [the audit](./docs/codebase-audit.md); the feature list does not imply they are solved.
 
 ## Ramp Sandbox
 

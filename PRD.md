@@ -9,17 +9,17 @@
 ### Current implementation snapshot (audited September 28, 2026)
 
 - Supabase Postgres and Supabase Auth are the active database and identity system. SQLite runtime code was removed. Local Postgres migrations are a partial copy of the remote Supabase history, not a complete database bootstrap.
-- Participants authenticate by magic link, then create or accept an invitation into one team. Participants have no self-service leave/switch/delete/merge endpoints. Invites are single-use in the intended sequential flow and expire after seven days; invite acceptance is not transactional.
-- A database unique index enforces one active membership per event. A trigger checks the six-member maximum, but its count is not serialized against concurrent joins. Teams may have fewer than three participants while forming.
+- Participants authenticate by magic link, then create or join one open team. Participants have no self-service leave, switch, delete, or merge endpoints.
+- A database unique index enforces one active membership per event. Team joins lock the target team before checking the six-member maximum. Teams may have fewer than three participants while forming.
 - Orders require at least three active members, a submission row, and a passed submission deadline. A completed write-up is not required. New teams start with zero cash and need an Admin allocation plus an explicit Ramp entity mapping.
 - Active members can edit submissions and images until the deadline. Team renaming currently has no deadline check. There is no immutable submission snapshot; changing the event deadline can reopen editing.
 - Submissions support a title, tagline, plain-text write-up (stored as `story_markdown` but not rendered as Markdown), typed project links, images, and public pages addressed by stable submission IDs.
-- The Admin console manages balances, membership, order-free team merges, empty-team archiving/deletion, invitations, deadlines, and manual Ramp reconciliation. Superadmins manage Admin roles.
+- The Admin console manages balances, membership reassignment/removal, order-free team merges, empty-team soft deletion, deadlines, and manual Ramp reconciliation. Superadmins manage Admin roles.
 - Runtime Ramp configuration supports one Sandbox business and supplier with per-team entity mappings. Separate Sandbox businesses per team would require integration changes.
 - The signed webhook receiver is implemented; stable deployment and automatic event processing are planned. Currently, received webhooks are stored durably without initiating reconciliation or fulfillment. Admin/CLI reconciliation fetches and validates bills; the live Supabase fulfillment function locks the order and updates inventory atomically and idempotently.
 - Cash is deducted at order creation through separate database writes. Transactional reservation, request deduplication, and rejected-order refunds are not implemented.
 - The September 28 operations record reports successful Resend/Supabase magic-link delivery and a 30-email/hour project-wide limit. The audit did not recheck SMTP, DNS, or Auth dashboard settings.
-- All public tables have RLS enabled, but the live membership helper omits `left_at`, allowing former members to retain direct Data API read access to their old team's protected rows. Application routes do filter active membership.
+- All public tables have RLS enabled. The membership helper excludes former members, and application routes also filter active membership.
 
 See [docs/codebase-audit.md](./docs/codebase-audit.md) for evidence, cleanup, and remaining gaps. Later goals, scenarios, requirements, metrics, and acceptance criteria are proposals; they do not establish that a feature or live test is complete. Ramp isolation/payment rehearsal is paused while its demo site is having issues; stable webhook deployment is planned separately on Vercel.
 
@@ -105,7 +105,7 @@ Participants should rotate roles during the session so everyone interacts with R
 
 ### Event roles
 
-- Admin: Sees event operations; manages team balance, membership, invitation, merging, archival, deadline, and reconciliation controls.
+- Admin: Sees event operations; manages team balance, membership, merging, soft deletion, deadline, and reconciliation controls.
 - Superadmin: Has all Admin permissions and can promote, demote, or remove Admins while preserving at least one Superadmin.
 - Simulated supplier: The event system that creates orders, invoices, and bills, then fulfills paid orders.
 
@@ -122,7 +122,7 @@ The first option is more hands-on. The second has tighter operational control.
 
 ### Phase A: Set up the bakery
 
-1. Participants create a team or accept a team invite link after authenticating.
+1. Participants create a team or join an open team after authenticating.
 2. Each team has a self-managed bakery name; an Admin sets its initial fake cash balance.
 3. Participants sign in to the correct Ramp Sandbox business.
 4. An Admin explains the team roles and approval rules.
@@ -271,7 +271,7 @@ The first option is more hands-on. The second has tighter operational control.
 #### Admin console
 
 - Shows recent orders and supports verified Ramp reconciliation.
-- Manages team balance, membership, invitations, merges, archiving/deletion, deadlines, and Admin roles.
+- Manages team balance, membership, merges, soft deletion, deadlines, and Admin roles.
 - Never fabricates a Ramp payment state or manually fulfills an unverified bill.
 
 ## 10. Team isolation model
@@ -288,7 +288,7 @@ Separate businesses could provide stronger separation, but require per-business 
 
 Supabase contains:
 
-- `events`, `profiles`, `teams`, `team_members`, and `team_invites`
+- `events`, `profiles`, `teams`, and `team_members`
 - `event_admins`, `superadmin_bootstraps`, and `team_balance_adjustments`
 - `submissions`, `submission_links`, and `submission_assets`
 - `team_ramp_entities`, `orders`, `order_lines`, and `order_ramp_sync`
@@ -411,7 +411,7 @@ These are target requirements. In particular, server-side order-submission dedup
 ### Admin tools
 
 - View recent orders and reconcile unfinished orders against Ramp.
-- Manage team balance, membership, invitations, merging, archive/delete, and deadline controls.
+- Manage team balance, membership, merging, soft deletion, and deadline controls.
 - Manage Admin roles as a Superadmin.
 - Display which participant or Admin must take the next action.
 
@@ -463,7 +463,7 @@ This is a proposed runbook. A participant status board, recipe/challenge gamepla
 ### Before the event
 
 - Provision Sandbox business or businesses.
-- Invite participants and confirm every account can sign in.
+- Confirm every participant can sign in, create a team, or join an open team.
 - Configure roles and approval policies.
 - Confirm who has permission to use the bill-payment Demo Action.
 - Create and verify webhook subscriptions.

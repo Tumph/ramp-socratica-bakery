@@ -26,7 +26,7 @@ export function AdminConsole({ teams, admins, deadline, actorRole }: { teams: Ad
       const response = await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Admin action failed.");
-      setNotice(data.inviteUrl ? `Invite link: ${data.inviteUrl}` : data.message ?? "Saved.");
+      setNotice(data.message ?? "Saved.");
       router.refresh();
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Admin action failed."); }
     finally { setWorking(false); }
@@ -71,7 +71,7 @@ export function AdminConsole({ teams, admins, deadline, actorRole }: { teams: Ad
       <header><div><h3>{team.name}</h3><p className="mutedCopy">{team.members.length}/6 members · {team.orderCount} orders · balance {formatMoney(team.available_cash_cents)}</p></div><span className="status">{teamStatus(team, deadline)}</span></header>
       <div className="teamAdminTools">
         <form onSubmit={(event) => submitBalance(event, team.id)}><label>Set balance (CAD)<input name="balance" type="number" min="0" step="0.01" defaultValue={(team.available_cash_cents / 100).toFixed(2)} /></label><label>Reason<input name="reason" maxLength={240} placeholder="e.g. Opening allocation" /></label><button className="secondary" disabled={working}>Save balance</button></form>
-        <div className="teamActions"><button className="secondary" disabled={working || team.status === "ARCHIVED"} onClick={() => void action({ action: "create_invite", teamId: team.id })}>Create invite link</button><button className="secondary" disabled={working || team.status === "ARCHIVED"} onClick={() => { if (window.confirm("Archive this empty team?")) void action({ action: "archive_team", teamId: team.id }); }}>Archive</button>{team.status === "ARCHIVED" && <button className="dangerButton" disabled={working} onClick={() => { if (window.confirm("Permanently delete this archived, empty team?")) void action({ action: "delete_team", teamId: team.id }); }}>Delete empty team</button>}</div>
+        <div className="teamActions"><button className="secondary" disabled={working || team.status === "ARCHIVED"} onClick={() => { if (window.confirm("Soft-delete this empty team?")) void action({ action: "archive_team", teamId: team.id }); }}>Soft delete</button></div>
       </div>
       <div className="memberAdminList">{team.members.length === 0 ? <p className="mutedCopy">No active participants.</p> : team.members.map((member) => <div className="memberAdminRow" key={member.id}><div><strong>{member.email}</strong><small>{member.role}</small></div><label>Move to<select defaultValue="" onChange={(event) => { if (event.target.value && window.confirm(`Move ${member.email}?`)) void action({ action: "reassign_member", membershipId: member.id, destinationTeamId: event.target.value }); event.currentTarget.value = ""; }}><option value="">Choose team</option>{teams.filter((candidate) => candidate.id !== team.id && candidate.status !== "ARCHIVED" && candidate.members.length < 6).map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name} ({candidate.members.length}/6)</option>)}</select></label><button className="linkButton" disabled={working} onClick={() => { if (window.confirm(`Remove ${member.email} from ${team.name}?`)) void action({ action: "remove_member", membershipId: member.id }); }}>Remove</button></div>)}</div>
     </section>)}</div>

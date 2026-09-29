@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentAdmin, getCurrentUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { TeamPanel } from "@/components/TeamPanel";
 import { submissionImageUrl } from "@/lib/submissions";
@@ -7,6 +7,7 @@ import { submissionImageUrl } from "@/lib/submissions";
 export const dynamic = "force-dynamic";
 
 export default async function TeamPage({ params }: { params: Promise<{ id: string }> }) {
+  if (await getCurrentAdmin()) redirect("/admin");
   const user = await getCurrentUser(); if (!user) redirect("/");
   const { id } = await params; if (id !== user.teamId) notFound();
   const admin = createAdminClient();

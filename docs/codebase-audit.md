@@ -34,7 +34,7 @@ Confirmed live protections:
 
 - Removed the unused `processRampWebhookInbox` export and its sole helper, `reconcileRampBill`. Neither had a runtime/script caller. These were inactive scaffolding, not a deployed processing path. The signed receiver, durable inbox, webhook setup/removal scripts, bill verification, and order reconciliation remain. Automatic processing remains planned and will need an actual execution entry point.
 - Removed `/api/auth/verify`, a legacy code-auth stub that only returned HTTP 410. Current authentication uses email links and `/auth/callback`; no repository caller used the stub.
-- Removed unused login-tab/code-input CSS and an obsolete confirmation-button selector. Renamed still-used helper/invite styles to describe their current purposes.
+- Removed unused login-tab/code-input CSS, an obsolete confirmation-button selector, and the unused invite-link style.
 - Corrected the login confirmation copy: participants can create/join teams themselves after authentication.
 - Declared `@next/env` directly at the already locked `16.3.5` version. All five operations scripts import it; it previously worked through Next.js's transitive dependency.
 - Consolidated duplicate auth imports and replaced obsolete worker/console-email comments.
@@ -72,9 +72,7 @@ These are audit findings, not features implemented by this cleanup.
 
 **Former members retain direct Data API reads through the live RLS helper.** `private.is_team_member` checks `(team_id, user_id)` but omits `left_at IS NULL`. Policies for teams/orders/order lines/inventory use it, so historical membership continues to authorize reads. Application routes derive active membership correctly; that does not repair direct Data API authorization. Fix the helper through a reviewed migration and verify removed/reassigned users lose old-team access.
 
-**Invite acceptance and team capacity are not serialized.** `acceptInvite` checks the token, inserts membership, then marks the invite consumed through separate writes. Two different users can race to accept one token. The live team-size trigger counts rows without locking the team, so concurrent joins can exceed six. The active-membership unique index still prevents one user joining two teams in the same event. Team creation also uses separate writes and ignores submission-insert errors, which can leave partial teams.
-
-**Invites are dropped across authentication.** The email request does not preserve `?invite=…`; the callback always redirects to `/`. A new participant must reopen the original invitation. Owner/Admin-created invitations are single-use in sequential operation, not a reusable team-wide join link.
+**Team membership is transactional.** Database functions create a team with its owner membership and submission in one transaction, and serialize direct joins by locking the target team before checking capacity. The active-membership unique index also prevents one user joining two teams in the same event.
 
 ### Cash and order reliability
 

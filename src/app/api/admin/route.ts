@@ -1,4 +1,3 @@
-import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { EVENT_ID, getCurrentAdmin } from "@/lib/auth";
@@ -6,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { syncRampOrder } from "@/lib/ramp-sync";
 
 const requestSchema = z.object({
-  action: z.enum(["set_balance", "reassign_member", "remove_member", "merge_teams", "archive_team", "delete_team", "set_deadline", "create_invite", "set_admin", "reconcile_ramp"]),
+  action: z.enum(["set_balance", "reassign_member", "remove_member", "merge_teams", "archive_team", "set_deadline", "set_admin", "reconcile_ramp"]),
   teamId: z.string().uuid().optional(),
   sourceTeamId: z.string().uuid().optional(),
   destinationTeamId: z.string().uuid().optional(),
@@ -17,8 +16,6 @@ const requestSchema = z.object({
   email: z.email().optional(),
   role: z.enum(["ADMIN", "SUPERADMIN", "REMOVE"]).optional(),
 });
-
-const tokenHash = (value: string) => createHash("sha256").update(value).digest("hex");
 
 async function requireEventTeam(teamId: string) {
   const { data } = await createAdminClient().from("teams").select("id").eq("id", teamId).eq("event_id", EVENT_ID).maybeSingle();
@@ -55,19 +52,13 @@ export async function POST(request: Request) {
       if (!input.sourceTeamId || !input.destinationTeamId) throw new Error("Source and destination teams are required.");
       await Promise.all([requireEventTeam(input.sourceTeamId), requireEventTeam(input.destinationTeamId)]);
       ({ error } = await admin.rpc("admin_merge_teams", { source_team_id: input.sourceTeamId, destination_team_id: input.destinationTeamId, actor_user_id: actor.id }));
-    } else if (input.action === "archive_team" || input.action === "delete_team") {
+    } else if (input.action === "archive_team") {
       if (!input.teamId) throw new Error("Team is required.");
       await requireEventTeam(input.teamId);
-      ({ error } = await admin.rpc(input.action === "archive_team" ? "admin_archive_team" : "admin_delete_empty_team", { target_team_id: input.teamId }));
+      ({ error } = await admin.rpc("admin_archive_team", { target_team_id: input.teamId }));
     } else if (input.action === "set_deadline") {
       if (!input.deadline) throw new Error("A deadline is required.");
       ({ error } = await admin.from("events").update({ submission_deadline_at: input.deadline }).eq("id", EVENT_ID));
-    } else if (input.action === "create_invite") {
-      if (!input.teamId) throw new Error("Team is required.");
-      await requireEventTeam(input.teamId);
-      const token = randomBytes(24).toString("base64url");
-      ({ error } = await admin.from("team_invites").insert({ event_id: EVENT_ID, team_id: input.teamId, token_hash: tokenHash(token), created_by: actor.id, expires_at: new Date(Date.now() + 7 * 86_400_000).toISOString() }));
-      if (!error) return NextResponse.json({ inviteUrl: `${new URL(request.url).origin}/?invite=${token}` });
     } else if (input.action === "set_admin") {
       if (actor.role !== "SUPERADMIN") return NextResponse.json({ error: "Superadmin access required." }, { status: 403 });
       if (!input.email || !input.role) throw new Error("Email and role are required.");
