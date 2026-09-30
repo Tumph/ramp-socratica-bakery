@@ -5,12 +5,12 @@ import { EVENT_ID, getCurrentAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const requestSchema = z.object({
-  action: z.enum(["create_team", "invite_member", "set_balance", "reassign_member", "remove_member", "merge_teams", "archive_team", "set_deadline", "set_admin"]),
+  action: z.enum(["create_team", "invite_member", "set_fund_limits", "reassign_member", "remove_member", "merge_teams", "archive_team", "set_deadline", "set_admin"]),
   teamId: z.string().uuid().optional(),
   sourceTeamId: z.string().uuid().optional(),
   destinationTeamId: z.string().uuid().optional(),
   membershipId: z.string().uuid().optional(),
-  balanceCents: z.number().int().min(0).max(100_000_000).optional(),
+  fundLimits: z.array(z.object({ teamId: z.uuid(), fundLimitCents: z.number().int().min(0).max(100_000_000) })).min(1).max(100).optional(),
   reason: z.string().trim().max(240).optional(),
   deadline: z.string().datetime().optional(),
   email: z.email().optional(),
@@ -66,10 +66,15 @@ export async function POST(request: Request) {
           options: { emailRedirectTo: `${origin}/auth/callback?invite=${encodeURIComponent(token)}` },
         }));
       }
-    } else if (input.action === "set_balance") {
-      if (!input.teamId || input.balanceCents === undefined) throw new Error("Team and balance are required.");
-      await requireEventTeam(input.teamId);
-      ({ error } = await admin.rpc("admin_set_team_fund", { target_team_id: input.teamId, target_balance_cents: input.balanceCents, adjustment_reason: input.reason ?? "Admin balance update", actor_user_id: actor.id }));
+    } else if (input.action === "set_fund_limits") {
+      if (!input.fundLimits) throw new Error("At least one team fund limit is required.");
+      await Promise.all(input.fundLimits.map(({ teamId }) => requireEventTeam(teamId)));
+      ({ error } = await admin.rpc("admin_set_team_fund_limits", {
+        target_event_id: EVENT_ID,
+        target_limits: input.fundLimits.map(({ teamId, fundLimitCents }) => ({ team_id: teamId, fund_limit_cents: fundLimitCents })),
+        adjustment_reason: input.reason ?? "Admin fund limit update",
+        actor_user_id: actor.id,
+      }));
     } else if (input.action === "reassign_member") {
       if (!input.membershipId || !input.destinationTeamId) throw new Error("Participant and destination team are required.");
       await Promise.all([requireEventMember(input.membershipId), requireEventTeam(input.destinationTeamId)]);

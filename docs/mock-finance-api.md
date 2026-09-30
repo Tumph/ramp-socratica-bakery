@@ -38,6 +38,7 @@ Returns the current participant's team fund, their most recently issued card, an
 {
   fund: {
     availableCents: number;
+    fundLimitCents: number;
     currency: "CAD";
     status: "ACTIVE" | "FROZEN";
     updatedAt: string;
@@ -135,24 +136,26 @@ A declined purchase is recorded in the simulator. The checkout route returns `40
 
 `POST /api/admin` requires an event Admin session.
 
-### Set shared fund balance
+### Set team fund limits
 
 ```ts
 {
-  action: "set_balance";
-  teamId: string;
-  balanceCents: number;
+  action: "set_fund_limits";
+  fundLimits: Array<{
+    teamId: string;
+    fundLimitCents: number;
+  }>;
   reason?: string;
 }
 ```
 
-This sets the team's current shared-fund balance and records an `ADMIN_ADJUSTMENT` ledger entry when the value changes.
+This updates every supplied team's total spend limit in one transaction. A change records an `ADMIN_ADJUSTMENT` ledger entry. Lowering a limit below prior spending results in a negative remaining balance and blocks new purchases.
 
 Other existing Admin operations manage membership, teams, deadlines, and Admin roles. Card freeze/revoke/reissue and simulated refund/reversal controls are not yet exposed by this API.
 
 ## Design constraints
 
 - Show `displayIdentifier` and `displaySuffix` as workshop-only visual identifiers, never as payment credentials.
-- Use `availableCents` as the team’s spendable balance.
+- Show `fundLimitCents` as the team’s total spend limit and `availableCents` as its remaining balance. An Admin can lower a limit below prior spending, so remaining balance can be negative; new purchases remain declined until the balance covers the requested amount.
 - Use transaction status and type verbatim for state-specific UI.
 - Treat API IDs as opaque strings.

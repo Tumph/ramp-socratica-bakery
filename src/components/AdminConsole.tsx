@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export type AdminTeam = {
-  id: string; name: string; status: string; available_cash_cents: number; owner_user_id: string | null; created_at: string; orderCount: number;
+  id: string; name: string; status: string; availableCents: number; fundLimitCents: number; owner_user_id: string | null; created_at: string; orderCount: number;
   members: { id: string; user_id: string; role: "OWNER" | "MEMBER"; email: string }[];
   pendingInvitations: { id: string; email: string; expires_at: string }[];
 };
@@ -42,12 +42,12 @@ export function AdminConsole({ teams, admins, deadline, actorRole }: { teams: Ad
     finally { setWorking(false); }
   }
 
-  function submitBalance(event: React.FormEvent<HTMLFormElement>) {
+  function submitFundLimits(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedTeam) return;
-    const data = new FormData(event.currentTarget); const dollars = Number(data.get("balance"));
-    if (!Number.isFinite(dollars) || dollars < 0) return setError("Enter a non-negative balance.");
-    void action({ action: "set_balance", teamId: selectedTeam.id, balanceCents: Math.round(dollars * 100), reason: String(data.get("reason") ?? "") });
+    const data = new FormData(event.currentTarget);
+    const fundLimits = activeTeams.map((team) => ({ teamId: team.id, fundLimitCents: Math.round(Number(data.get(`fund-limit-${team.id}`)) * 100) }));
+    if (fundLimits.some(({ fundLimitCents }) => !Number.isSafeInteger(fundLimitCents) || fundLimitCents < 0)) return setError("Each fund limit must be a non-negative amount.");
+    void action({ action: "set_fund_limits", fundLimits, reason: String(data.get("fund-limit-reason") ?? "") });
   }
 
   function submitCreateTeam(event: React.FormEvent<HTMLFormElement>) {
@@ -82,7 +82,7 @@ export function AdminConsole({ teams, admins, deadline, actorRole }: { teams: Ad
       </section>
       <section className="panel adminCard">
         <p className="eyebrow">Workshop finance</p><h2>Shared funds</h2>
-        <p className="mutedCopy">Set a team’s available workshop balance from the team directory below. Every adjustment is recorded in the fund ledger.</p>
+        <p className="mutedCopy">Set total team fund limits below. Remaining balance can become negative when a limit is lowered after spending.</p>
       </section>
       <section className="panel adminCard">
         <p className="eyebrow">Team setup</p><h2>Create a team</h2>
@@ -93,15 +93,26 @@ export function AdminConsole({ teams, admins, deadline, actorRole }: { teams: Ad
       </section>
     </div>
 
+    <section className="panel adminTablePanel" aria-labelledby="fund-limits-heading">
+      <header className="tableHeader"><div><p className="eyebrow">Workshop finance</p><h2 id="fund-limits-heading">Fund limits</h2><p className="mutedCopy">Set each team’s total spend limit. Purchases are declined whenever the next purchase would exceed that limit.</p></div></header>
+      <form onSubmit={submitFundLimits}>
+        <div className="tableScroll"><table className="adminTable">
+          <thead><tr><th scope="col">Team</th><th scope="col">Fund limit (CAD)</th><th scope="col">Spent</th><th scope="col">Remaining</th></tr></thead>
+          <tbody>{activeTeams.length ? activeTeams.map((team) => { const spentCents = team.fundLimitCents - team.availableCents; return <tr key={team.id}><th scope="row">{team.name}</th><td><input aria-label={`${team.name} fund limit in CAD`} name={`fund-limit-${team.id}`} type="number" min="0" step="0.01" defaultValue={(team.fundLimitCents / 100).toFixed(2)} /></td><td>{formatMoney(spentCents)}</td><td className={team.availableCents < 0 ? "negativeBalance" : undefined}>{formatMoney(team.availableCents)}</td></tr>; }) : <tr><td className="tableMessage" colSpan={4}>Create a team before setting fund limits.</td></tr>}</tbody>
+        </table></div>
+        <div className="fundLimitsFooter"><label htmlFor="fund-limit-reason">Reason (optional)<input id="fund-limit-reason" name="fund-limit-reason" maxLength={240} placeholder="e.g. Grading allocation" /></label><button className="primary" disabled={working || !activeTeams.length}>{working ? "Saving…" : "Save fund limits"}</button></div>
+      </form>
+    </section>
+
     <section className="panel adminTablePanel" aria-labelledby="teams-heading">
       <header className="tableHeader">
-        <div><p className="eyebrow">Teams</p><h2 id="teams-heading">Team directory</h2><p className="mutedCopy">Select a team to manage its balance and members.</p></div>
-        <button className="secondary" type="button" disabled={working || activeTeams.length < 2} onClick={() => setPendingAction({ title: "Merge teams", description: "Choose the source and destination teams. The source team must have no orders, and the combined team cannot exceed six members.", payload: { action: "merge_teams" }, confirmLabel: "Merge teams", destructive: true })}>Merge teams</button>
+        <div><p className="eyebrow">Teams</p><h2 id="teams-heading">Team directory</h2><p className="mutedCopy">Select a team to manage its members and invitations.</p></div>
+        <button className="secondary" type="button" disabled={working || activeTeams.length < 2} onClick={() => setPendingAction({ title: "Merge teams", description: "Choose the source and destination teams. The source team must have no orders, both teams must be unfunded, and the combined team cannot exceed six members.", payload: { action: "merge_teams" }, confirmLabel: "Merge teams", destructive: true })}>Merge teams</button>
       </header>
       <div className="tableScroll"><table className="adminTable">
-        <thead><tr><th scope="col">Team</th><th scope="col">Status</th><th scope="col">Members</th><th scope="col">Balance</th><th scope="col">Orders</th><th scope="col"><span className="srOnly">Action</span></th></tr></thead>
+        <thead><tr><th scope="col">Team</th><th scope="col">Status</th><th scope="col">Members</th><th scope="col">Fund limit</th><th scope="col">Orders</th><th scope="col"><span className="srOnly">Action</span></th></tr></thead>
         <tbody>{teams.length ? teams.map((team) => <tr key={team.id} className={selectedTeamId === team.id ? "isSelected" : undefined}>
-          <th scope="row">{team.name}</th><td><span className="status">{teamStatus(team, deadline).replaceAll("_", " ")}</span></td><td>{team.members.length} of 6</td><td>{formatMoney(team.available_cash_cents)}</td><td>{team.orderCount}</td>
+          <th scope="row">{team.name}</th><td><span className="status">{teamStatus(team, deadline).replaceAll("_", " ")}</span></td><td>{team.members.length} of 6</td><td>{formatMoney(team.fundLimitCents)}</td><td>{team.orderCount}</td>
           <td className="teamTableAction"><button className="secondary" type="button" onClick={() => setSelectedTeamId(team.id)}>{selectedTeamId === team.id ? "Managing" : "Manage"}</button></td>
         </tr>) : <tr><td className="tableMessage" colSpan={6}>No teams have been created.</td></tr>}</tbody>
       </table></div>
@@ -109,10 +120,7 @@ export function AdminConsole({ teams, admins, deadline, actorRole }: { teams: Ad
 
     {selectedTeam && <section className="panel teamManagementPanel" aria-labelledby="manage-team-heading">
       <header className="teamManagementHeader"><div><p className="eyebrow">Team management</p><h2 id="manage-team-heading">{selectedTeam.name}</h2><p className="mutedCopy">{selectedTeam.members.length}/6 members · {selectedTeam.orderCount} orders · {teamStatus(selectedTeam, deadline).replaceAll("_", " ")}</p></div><button className="linkButton" type="button" onClick={() => setSelectedTeamId(null)}>Close</button></header>
-      <div className="managementGrid">
-        <form className="balanceForm" onSubmit={submitBalance}><h3>Balance</h3><label htmlFor="team-balance">Shared fund (CAD)<input id="team-balance" name="balance" type="number" min="0" step="0.01" defaultValue={(selectedTeam.available_cash_cents / 100).toFixed(2)} /></label><label htmlFor="balance-reason">Reason<input id="balance-reason" name="reason" maxLength={240} placeholder="e.g. Opening allocation" /></label><button className="secondary" disabled={working}>Save balance</button></form>
-        <section className="teamDangerZone"><h3>Team status</h3><p className="mutedCopy">Archiving hides the team from the event. This only succeeds for an empty team.</p><button className="dangerButton" type="button" disabled={working || selectedTeam.status === "ARCHIVED"} onClick={() => setPendingAction({ title: `Archive ${selectedTeam.name}?`, description: "This marks the empty team as archived. Its participants must be removed first.", payload: { action: "archive_team", teamId: selectedTeam.id }, confirmLabel: "Archive team", destructive: true })}>Archive team</button></section>
-      </div>
+      <section className="teamDangerZone"><h3>Team status</h3><p className="mutedCopy">Archiving hides the team from the event. This only succeeds for an empty team.</p><button className="dangerButton" type="button" disabled={working || selectedTeam.status === "ARCHIVED"} onClick={() => setPendingAction({ title: `Archive ${selectedTeam.name}?`, description: "This marks the empty team as archived. Its participants must be removed first.", payload: { action: "archive_team", teamId: selectedTeam.id }, confirmLabel: "Archive team", destructive: true })}>Archive team</button></section>
       <section className="membersSection"><header><h3>Invite participants</h3><p className="mutedCopy">Send a seven-day sign-in link that adds the recipient to {selectedTeam.name}. Invitations and active members together cannot exceed six people.</p></header><form className="inviteForm" onSubmit={submitInvitation}><label htmlFor="invite-email">Participant email<input id="invite-email" name="invite-email" type="email" required placeholder="person@example.com" /></label><button className="primary" disabled={working || selectedTeam.members.length + selectedTeam.pendingInvitations.length >= 6}>Send invitation</button></form>{selectedTeam.pendingInvitations.length > 0 && <div className="tableScroll"><table className="membersTable"><thead><tr><th scope="col">Invitation pending</th><th scope="col">Expires</th></tr></thead><tbody>{selectedTeam.pendingInvitations.map((invitation) => <tr key={invitation.id}><th scope="row">{invitation.email}</th><td>{new Intl.DateTimeFormat("en-CA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(invitation.expires_at))}</td></tr>)}</tbody></table></div>}</section>
       <section className="membersSection"><header><h3>Members</h3><p className="mutedCopy">Move participants between teams or remove them from this team.</p></header><div className="tableScroll"><table className="membersTable"><thead><tr><th scope="col">Participant</th><th scope="col">Role</th><th scope="col">Move to</th><th scope="col"><span className="srOnly">Remove</span></th></tr></thead><tbody>{selectedTeam.members.length ? selectedTeam.members.map((member) => <tr key={member.id}><th scope="row">{member.email}</th><td>{member.role}</td><td><select aria-label={`Move ${member.email} to another team`} defaultValue="" disabled={working} onChange={(event) => { const destination = event.target.value; event.currentTarget.value = ""; if (destination) { const destinationTeam = teams.find((team) => team.id === destination); setPendingAction({ title: `Move ${member.email}?`, description: `This moves the participant from ${selectedTeam.name} to ${destinationTeam?.name ?? "the selected team"}.`, payload: { action: "reassign_member", membershipId: member.id, destinationTeamId: destination }, confirmLabel: "Move participant" }); } }}><option value="">Choose team</option>{teams.filter((candidate) => candidate.id !== selectedTeam.id && candidate.status !== "ARCHIVED" && candidate.members.length < 6).map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name} ({candidate.members.length}/6)</option>)}</select></td><td className="teamTableAction"><button className="linkButton" type="button" disabled={working} onClick={() => setPendingAction({ title: `Remove ${member.email}?`, description: `This removes the participant from ${selectedTeam.name}. They will not belong to any bakery team afterward.`, payload: { action: "remove_member", membershipId: member.id }, confirmLabel: "Remove participant", destructive: true })}>Remove</button></td></tr>) : <tr><td className="tableMessage" colSpan={4}>No active participants.</td></tr>}</tbody></table></div></section>
     </section>}

@@ -16,7 +16,7 @@ The system is local to the event application. It has no payment-network connecti
 
 ## Team finance
 
-- `team_funds` holds one spendable CAD balance per team.
+- `team_funds` holds one CAD fund limit and remaining balance per team. An Admin can lower a limit below prior spending, resulting in a negative remaining balance that blocks new purchases.
 - `mock_cards` holds one nonfunctional display card per active participant.
 - `mock_authorizations` records purchase decisions.
 - `mock_transactions` records visible purchase/refund/reversal activity.
@@ -35,7 +35,7 @@ Supplier checkout calls `post_mock_card_purchase`. The function locks the fund r
 ## Current limits
 
 - The finance API returns bounded newest-first transaction lists; cursor pagination is not implemented.
-- Admin funding is implemented. Admin controls for card lifecycle and simulated refunds/reversals are not implemented.
+- Admins can edit all active-team fund limits together. Card lifecycle and simulated refund/reversal controls are not implemented.
 - The simulator schema has been deployed, but an end-to-end funded-team rehearsal has not yet been recorded.
 - The Admin console sends individual team invitations. CSV import with validation and preview is a planned event-setup improvement.
 - Supabase Auth must allow the deployed callback URL with an `invite` query parameter (for example, `https://app.example.com/auth/callback*`) before invitations can be sent from that origin.

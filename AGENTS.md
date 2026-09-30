@@ -46,10 +46,10 @@ Supabase Auth owns user identity and sessions. The application owns bakery membe
 
 ## Workshop-finance rules
 
-- Every active team has one shared CAD fund.
+- Every active team has one shared CAD fund with an Admin-controlled total fund limit. Remaining balance can be negative when an Admin lowers the limit below prior spending; new purchases still require enough remaining balance.
 - Every active member receives one nonfunctional mock card. Store only display identifiers such as `BAKE-...`; never store a PAN, CVV, or expiry date.
 - Checkout totals are calculated server-side from the catalogue.
-- All fund changes must create an immutable ledger entry.
+- All fund-limit changes and purchases must create an immutable ledger entry.
 - The purchase function must remain atomic and idempotent: lock the fund before spending and never trust browser-supplied totals.
 - Card, fund, transaction, and ledger reads go through trusted application APIs; do not grant browser roles direct write access.
 
