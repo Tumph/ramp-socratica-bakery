@@ -1,17 +1,15 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-// Frontend only for now: the simulator's real session still comes from Supabase
-// magic links on the bakery side. This validates locally and advances the flow.
+/** The Ramp design around the application's real Supabase magic-link flow. */
 export function RampLoginForm() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [sent, setSent] = useState(false);
 
-  function submit(event: React.FormEvent) {
+  async function submit(event: React.FormEvent) {
     event.preventDefault();
     const value = email.trim();
     if (!value) {
@@ -24,8 +22,23 @@ export function RampLoginForm() {
     }
     setError(null);
     setSubmitting(true);
-    router.push("/ramp/home");
+    try {
+      const response = await fetch("/api/auth/request-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: value }),
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? "Unable to send a sign-in link.");
+      setSent(true);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to send a sign-in link.");
+    } finally {
+      setSubmitting(false);
+    }
   }
+
+  if (sent) return <p className="rampNote">Check <strong>{email}</strong> for your sign-in link.</p>;
 
   return (
     <form className="rampForm" onSubmit={submit} noValidate>
@@ -46,7 +59,7 @@ export function RampLoginForm() {
       </div>
       {error && <p className="rampError" role="alert">{error}</p>}
       <button className="rampSubmit" type="submit" disabled={submitting}>
-        {submitting ? "Continuing…" : "Continue"}
+        {submitting ? "Sending…" : "Continue"}
       </button>
       <div className="rampFormFooter" />
     </form>

@@ -400,6 +400,9 @@ body {
 }
 
 .shopPrice:hover { background: #ece5f7; }
+.shopCard--soldOut { filter: grayscale(1); opacity: .62; }
+.shopCard--soldOut .shopCardArt:hover img { transform: none; }
+.shopPrice:disabled { cursor: not-allowed; background: #e9e6e4; color: #6e6a68; }
 
 /* Cart dock --------------------------------------------------------- */
 
@@ -581,6 +584,7 @@ body {
 }
 
 .shopAddToCart:hover { background: rgba(188, 209, 241, 0.5); }
+.shopAddToCart:disabled { cursor: not-allowed; border-color: #e3e0de; background: #ece9e7; color: #746f6c; }
 
 .shopAllergens {
   padding: 12px;

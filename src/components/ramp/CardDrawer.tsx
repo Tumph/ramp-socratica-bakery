@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { WalletCard } from "@/lib/ramp/types";
-import { formatCardAmount, remainingFraction } from "@/lib/ramp/format";
+import { remainingFraction } from "@/lib/ramp/format";
 import { CardFace } from "./CardFace";
 import { CopyButton } from "./CopyButton";
 import { RampIcon } from "./RampIcon";

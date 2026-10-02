@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { catalogById } from "@/lib/catalog";
 import type { CartLine } from "@/lib/store/cart";
+import type { StoreProduct } from "@/lib/store/catalog-server";
 
-export function ReceiptView({ lines }: { lines: CartLine[] }) {
+export function ReceiptView({ lines, products: catalogue }: { lines: CartLine[]; products: StoreProduct[] }) {
+  const productsById = new Map(catalogue.map((product) => [product.id, product]));
   // One thumbnail per distinct product, in the order they were bought.
-  const products = lines
-    .map((line) => catalogById.get(line.productId))
+  const receiptProducts = lines
+    .map((line) => productsById.get(line.productId))
     .filter((product): product is NonNullable<typeof product> => Boolean(product));
 
   return (
@@ -19,11 +20,11 @@ export function ReceiptView({ lines }: { lines: CartLine[] }) {
       </div>
 
       <div className="receiptFoot">
-        {products.length > 0 && (
+        {receiptProducts.length > 0 && (
           <ul className="receiptItems">
-            {products.map((product) => (
+            {receiptProducts.map((product) => (
               <li key={product.id}>
-                <img src={`/store/products/${product.id}.png`} alt={product.name} />
+                <img src={`/store/products/${product.imageFilename ?? `${product.id}.png`}`} alt={product.name} />
               </li>
             ))}
           </ul>

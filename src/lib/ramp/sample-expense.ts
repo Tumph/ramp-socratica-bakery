@@ -38,13 +38,6 @@ export const sampleExpenses: Record<string, ExpenseDetail> = {
         editable: true,
       },
       {
-        id: "receipt",
-        icon: "field-receipt",
-        label: "Receipt",
-        value: "Upload a receipt (required)",
-        missing: true,
-      },
-      {
         id: "category",
         icon: "field-category",
         label: "Accounting Category",

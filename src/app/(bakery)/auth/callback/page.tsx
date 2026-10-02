@@ -29,7 +29,7 @@ export default function AuthCallbackPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token: invite }),
         });
-        const data = await response.json();
+        const data = await response.json() as { error?: string };
         if (!response.ok) {
           setError(data.error ?? "Your team invitation could not be accepted.");
           return;

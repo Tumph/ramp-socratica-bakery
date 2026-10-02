@@ -1,18 +1,17 @@
 "use client";
 
-import { catalogById } from "@/lib/catalog";
 import { useStoreCart } from "./StoreCart";
 
 /** Bottom tray: one stack per product, labelled on hover. */
 export function CartDock() {
-  const { lines, remove } = useStoreCart();
+  const { lines, remove, productsById } = useStoreCart();
   if (lines.length === 0) return null;
 
   return (
     <div className="shopDock">
       <ul className="shopDockItems">
         {lines.map((line) => {
-          const product = catalogById.get(line.productId);
+          const product = productsById.get(line.productId);
           if (!product) return null;
           // Stacked thumbnails overlap, so the group widens with quantity.
           const width = 75 + (line.quantity - 1) * 35;
@@ -31,7 +30,7 @@ export function CartDock() {
                 {Array.from({ length: line.quantity }).map((_, i) => (
                   <img
                     key={i}
-                    src={`/store/products/${product.id}.png`}
+                    src={`/store/products/${product.imageFilename ?? `${product.id}.png`}`}
                     alt=""
                     aria-hidden
                     style={{ left: i * 35 }}

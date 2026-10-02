@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { StoreHeader } from "@/components/store/StoreHeader";
+import { getActiveStoreVendors } from "@/lib/store/catalog-server";
 
 /** The three market areas. Names and copy come from the design. */
 const AREAS = [
@@ -8,7 +9,8 @@ const AREAS = [
   { id: "fridge", name: "Fridge", blurb: "Anything that needs cold temps" },
 ];
 
-export default function MarketPage() {
+export default async function MarketPage() {
+  const vendors = await getActiveStoreVendors();
   return (
     <div className="storePage">
       <StoreHeader />
@@ -22,7 +24,13 @@ export default function MarketPage() {
         </section>
 
         <nav className="storeAreas" aria-label="Market areas">
-          {AREAS.map((area) => (
+          {vendors.map((vendor) => {
+            const area = AREAS.find((candidate) => candidate.id === vendor.slug) ?? {
+              id: vendor.slug,
+              name: vendor.name,
+              blurb: "Wholesale ingredients and supplies",
+            };
+            return (
             <Link key={area.id} href={`/store/market/${area.id}`} className="storeArea">
               <span className="storeAreaHead">
                 <span className="storeAreaName">{area.name}</span>
@@ -30,7 +38,8 @@ export default function MarketPage() {
               </span>
               <span className="storeAreaBlurb">{area.blurb}</span>
             </Link>
-          ))}
+            );
+          })}
         </nav>
 
         <div className="storeScene">

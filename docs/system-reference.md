@@ -25,7 +25,7 @@ The system is local to the event application. It has no payment-network connecti
 - `mock_transactions` records visible purchase/refund/reversal activity.
 - `fund_ledger_entries` is the immutable history of every fund change.
 
-Supplier checkout calls `post_mock_card_purchase`. The function locks the fund row, checks idempotency, resolves an active registered vendor, checks active membership and card ownership, calculates the server-side catalogue total, and atomically writes the vendor-attributed order, transaction, ledger entry, and inventory update.
+Supplier checkout calls `post_mixed_store_checkout`. The function locks the shared fund once, checks idempotency, resolves active registered vendors and their server-side product prices, checks active membership and card ownership, then atomically writes one vendor-attributed order, transaction, and ledger entry per vendor while decrementing inventory.
 
 ## Routes
 

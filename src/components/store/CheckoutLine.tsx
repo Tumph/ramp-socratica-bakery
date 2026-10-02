@@ -13,7 +13,7 @@ export function CheckoutLine({ product, quantity }: { product: Product; quantity
   return (
     <li className="checkoutLine">
       <div className="checkoutItem">
-        <img className="checkoutThumb" src={`/store/products/${product.id}.png`} alt="" aria-hidden />
+        <img className="checkoutThumb" src={`/store/products/${product.imageFilename ?? `${product.id}.png`}`} alt="" aria-hidden />
         <span className="checkoutName">{product.name}</span>
       </div>
 

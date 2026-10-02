@@ -4,8 +4,7 @@ import { CartDock } from "@/components/store/CartDock";
 import { ProductCard } from "@/components/store/ProductCard";
 import { StoreHeader } from "@/components/store/StoreHeader";
 import { VisitPills, type VisitTarget } from "@/components/store/VisitPills";
-import { catalogById } from "@/lib/catalog";
-import { defaultConfig } from "@/lib/ramp/config";
+import { getActiveStoreProducts, getActiveStoreVendors } from "@/lib/store/catalog-server";
 
 const TONES: Record<string, VisitTarget["tone"]> = {
   aisle: "mint",
@@ -19,25 +18,20 @@ const COPY: Record<string, { title: string; blurb: string }> = {
   fridge: { title: "The Fridge", blurb: "Mind the cold — shut the door behind you." },
 };
 
-export function generateStaticParams() {
-  return defaultConfig.vendors.map((vendor) => ({ area: vendor.id }));
-}
-
 export default async function AreaPage({ params }: { params: Promise<{ area: string }> }) {
   const { area } = await params;
-  const vendor = defaultConfig.vendors.find((v) => v.id === area);
+  const [products, vendors] = await Promise.all([getActiveStoreProducts(), getActiveStoreVendors()]);
+  const vendor = vendors.find((vendor) => vendor.slug === area);
   if (!vendor) notFound();
 
-  const products = vendor.productIds
-    .map((id) => catalogById.get(id))
-    .filter((product): product is NonNullable<typeof product> => Boolean(product));
+  const vendorProducts = products.filter((product) => product.vendorSlug === vendor.slug);
 
   // The other two areas, for the "pay a visit to" pills.
-  const others: VisitTarget[] = defaultConfig.vendors
-    .filter((v) => v.id !== vendor.id)
-    .map((v) => ({ id: v.id, name: v.name, tone: TONES[v.id] ?? "lilac" }));
+  const others: VisitTarget[] = vendors
+    .filter((other) => other.slug !== vendor.slug)
+    .map((other) => ({ id: other.slug, name: other.name, tone: TONES[other.slug] ?? "lilac" }));
 
-  const copy = COPY[vendor.id] ?? { title: vendor.name, blurb: vendor.blurb ?? "" };
+  const copy = COPY[vendor.slug] ?? { title: vendor.name, blurb: "" };
 
   return (
     <div className="storePage">
@@ -46,8 +40,8 @@ export default async function AreaPage({ params }: { params: Promise<{ area: str
         <AreaHeading title={copy.title} blurb={copy.blurb} />
         <VisitPills targets={others} />
         <div className="shopGrid">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} areaId={vendor.id} />
+          {vendorProducts.map((product) => (
+            <ProductCard key={product.id} product={product} areaId={vendor.slug} />
           ))}
         </div>
       </main>

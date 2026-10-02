@@ -1,18 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useTransition, useState } from "react";
 import { completeOrder } from "@/app/(store)/cart-actions";
-import { catalogById } from "@/lib/catalog";
 import { CartSummary } from "./CartSummary";
 import { CheckoutLine } from "./CheckoutLine";
 import { SummaryScaleTuner } from "./SummaryScaleTuner";
 import { useStoreCart } from "./StoreCart";
 
 export function CheckoutView() {
-  const { lines, totalCents } = useStoreCart();
+  const { lines, totalCents, productsById } = useStoreCart();
+  const [checkoutError, setCheckoutError] = useState("");
+  const [isCheckingOut, startCheckout] = useTransition();
 
   const rows = lines
-    .map((line) => ({ product: catalogById.get(line.productId), quantity: line.quantity }))
+    .map((line) => ({ product: productsById.get(line.productId), quantity: line.quantity }))
     .filter((row): row is { product: NonNullable<typeof row.product>; quantity: number } =>
       Boolean(row.product),
     );
@@ -43,11 +45,19 @@ export function CheckoutView() {
           )}
         </section>
 
+        {checkoutError && <p className="error" role="alert">{checkoutError}</p>}
         <CartSummary
           subtotalCents={totalCents}
           totalCents={totalCents}
-          disabled={rows.length === 0}
-          onPayWithRamp={() => completeOrder()}
+          disabled={rows.length === 0 || isCheckingOut}
+          onPayWithRamp={() => startCheckout(async () => {
+            setCheckoutError("");
+            try {
+              await completeOrder();
+            } catch (error) {
+              setCheckoutError(error instanceof Error ? error.message : "Unable to complete this checkout.");
+            }
+          })}
         />
       </div>
 

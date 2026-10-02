@@ -1,4 +1,3 @@
-import { catalogById } from "../catalog";
 
 /**
  * Cart persistence.
@@ -22,7 +21,7 @@ export type CartLine = { productId: string; quantity: number };
 /** Stored compactly; a cookie is capped at ~4KB. */
 type StoredLine = { p: string; q: number };
 
-export function parseCart(raw: string | undefined): CartLine[] {
+export function parseCart(raw: string | undefined, productIds = new Set(catalogById.keys())): CartLine[] {
   if (!raw) return [];
   try {
     const parsed: unknown = JSON.parse(raw);
@@ -30,9 +29,7 @@ export function parseCart(raw: string | undefined): CartLine[] {
     return parsed
       .map((entry) => entry as StoredLine)
       .filter((entry) => typeof entry?.p === "string" && Number.isInteger(entry?.q))
-      // Drop anything no longer in the catalogue so a stale cookie cannot
-      // resurrect a removed product.
-      .filter((entry) => catalogById.has(entry.p) && entry.q > 0)
+      .filter((entry) => productIds.has(entry.p) && entry.q > 0)
       .map((entry) => ({ productId: entry.p, quantity: Math.min(entry.q, MAX_QUANTITY) }));
   } catch {
     return [];
@@ -48,12 +45,13 @@ export function serializeCart(lines: CartLine[]) {
 export function applyCartChange(
   lines: CartLine[],
   change: { type: "add" | "remove"; productId: string; quantity?: number },
+  productIds = new Set(catalogById.keys()),
 ): CartLine[] {
   const delta = change.quantity ?? 1;
   const existing = lines.find((line) => line.productId === change.productId);
 
   if (change.type === "add") {
-    if (!catalogById.has(change.productId)) return lines;
+    if (!productIds.has(change.productId)) return lines;
     if (existing) {
       return lines.map((line) =>
         line.productId === change.productId
@@ -71,14 +69,18 @@ export function applyCartChange(
     .filter((line) => line.quantity > 0);
 }
 
-export function cartTotals(lines: CartLine[]) {
+export function cartTotals(
+  lines: CartLine[],
+  pricesByProductId = new Map(catalogById.entries().map(([id, product]) => [id, product.priceCents])),
+) {
   let count = 0;
   let totalCents = 0;
   for (const line of lines) {
-    const product = catalogById.get(line.productId);
-    if (!product) continue;
+    const priceCents = pricesByProductId.get(line.productId);
+    if (priceCents === undefined) continue;
     count += line.quantity;
-    totalCents += product.priceCents * line.quantity;
+    totalCents += priceCents * line.quantity;
   }
   return { count, totalCents };
 }
+import { catalogById } from "../catalog";

@@ -556,15 +556,6 @@ button.rampCardRow, a.rampCardRow { cursor: pointer; }
 
 .rampIncomplete { margin-top: 32px; }
 
-.rampVisuallyHidden {
-  position: absolute;
-  width: 1px; height: 1px;
-  margin: -1px; padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
 
 /* Stacked panels share a border: the header's bottom edge is the body's top. */
 .rampExpenseStack { margin-top: 12px; }
@@ -1461,36 +1452,9 @@ button.rampCardRow, a.rampCardRow { cursor: pointer; }
 
 /* Right preview column --------------------------------------------- */
 
-.rampPreview {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  padding: 24px;
-  border-left: 1px solid var(--ramp-line);
-  background: var(--ramp-grey-98);
-}
-
-.rampDropZone {
-  flex: 1;
-  min-height: 160px;
-  display: grid;
-  place-items: center;
-  padding: 40px;
-  border: 1px dashed var(--ramp-line-strong);
-  background: var(--ramp-white);
-  font: inherit;
-  cursor: pointer;
-}
-
-.rampDropZone--dragging { border-color: var(--ramp-grey-10); background: var(--ramp-grey-95); }
-.rampDropZoneInner { display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 371px; text-align: center; }
-.rampDropZoneTitle { font-size: 16px; font-weight: 300; line-height: 24px; color: var(--ramp-grey-42); }
-.rampDropZoneHint { font-size: 12px; font-weight: 300; line-height: 16px; color: var(--ramp-grey-42); }
-
 @media (max-width: 1100px) {
   .rampExpensePage { flex-direction: column; }
   .rampExpenseMain { flex: 1 1 auto; max-width: none; }
-  .rampPreview { border-left: 0; border-top: 1px solid var(--ramp-line); min-height: 320px; }
 }
 
 @media (max-width: 760px) {
@@ -1532,6 +1496,8 @@ button.rampCardRow, a.rampCardRow { cursor: pointer; }
 .rampAdminSelect > span { font-size: 12px; line-height: 16px; color: var(--ramp-grey-42); }
 
 .rampAdminGrid input,
+.rampAdminGrid select,
+.rampAdminGrid textarea,
 .rampAdminSelect select {
   height: 40px;
   padding: 0 10px;
@@ -1541,8 +1507,10 @@ button.rampCardRow, a.rampCardRow { cursor: pointer; }
   font-size: 14px;
   color: var(--ramp-grey-10);
 }
+.rampAdminGrid textarea { height: auto; min-height: 80px; padding: 10px; resize: vertical; }
 
 .rampAdminGrid input:focus,
+.rampAdminGrid textarea:focus,
 .rampAdminSelect select:focus { outline: none; border-color: var(--ramp-grey-10); }
 .rampAdminSelect { max-width: 280px; }
 
@@ -1566,12 +1534,113 @@ button.rampCardRow, a.rampCardRow { cursor: pointer; }
 .rampAdminCheck small { margin-left: auto; color: var(--ramp-grey-42); }
 .rampAdminCheck em { font-style: normal; font-size: 11px; color: var(--ramp-grey-42); }
 
+/* Product-art choices need a card treatment, unlike the compact vendor checks. */
+.rampProductAssetGrid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.rampProductAsset {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  grid-template-rows: 120px auto;
+  align-items: start;
+  gap: 6px 8px;
+  min-width: 0;
+  padding: 10px;
+}
+.rampProductAsset input { grid-column: 1; grid-row: 1; margin: 5px 0 0; }
+.rampProductAsset img {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  height: 120px;
+  object-fit: contain;
+}
+.rampProductAsset span {
+  grid-column: 1 / -1;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 16px;
+}
+
 .rampAdminRadio { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
 
 .rampAdminTable { width: 100%; border-collapse: collapse; font-size: 14px; font-weight: 300; }
 .rampAdminTable th, .rampAdminTable td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--ramp-line); }
 .rampAdminTable th { font-weight: 400; color: var(--ramp-grey-42); font-size: 12px; }
 
+.rampAdminSectionTitle { margin: 0; font-size: 20px; line-height: 28px; font-weight: 400; }
+.rampAdminList { display: grid; gap: 8px; }
+.rampAdminListRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid var(--ramp-line);
+  border-radius: 6px;
+  background: var(--ramp-white);
+}
+.rampAdminListRow > img { width: 56px; height: 56px; object-fit: contain; flex: 0 0 auto; }
+.rampAdminListRow > div:nth-child(2), .rampAdminStoreIdentity { display: grid; min-width: 0; gap: 2px; }
+.rampAdminListRow strong { font-size: 14px; font-weight: 500; }
+.rampAdminListRow span, .rampAdminListRow small { color: var(--ramp-grey-42); font-size: 12px; line-height: 16px; }
+.rampAdminListRow small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rampAdminListRow > .rampAdminActions { margin-left: auto; flex: 0 0 auto; }
+.rampAdminStoreIdentity input { height: 32px; padding: 0 8px; border: 1px solid var(--ramp-line-strong); font: inherit; }
+.rampProductForm { display: grid; gap: 20px; }
+.rampProductFormHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--ramp-line); }
+.rampProductFormHead h3 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 400; }
+.rampProductClose { padding: 0; border: 0; background: transparent; color: var(--ramp-grey-42); font: inherit; font-size: 14px; cursor: pointer; }
+.rampProductClose:hover { color: var(--ramp-grey-10); }
+
+/* Live event controls use the former standalone control-room actions with the
+   Ramp control-room treatment. */
+.rampFacilitator { display: grid; gap: 16px; }
+.rampFacilitator .panel { padding: 16px; border: 1px solid var(--ramp-line-strong); background: var(--ramp-white); }
+.rampFacilitator h2, .rampFacilitator h3 { margin: 0; font-size: 20px; line-height: 28px; font-weight: 400; }
+.rampFacilitator h3 { font-size: 16px; line-height: 24px; }
+.rampFacilitator .eyebrow { margin: 0 0 4px; color: var(--ramp-grey-42); font-size: 12px; font-weight: 300; line-height: 16px; letter-spacing: 0; text-transform: none; }
+.rampFacilitator .adminControls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.rampFacilitator .adminCard { display: grid; align-content: start; gap: 12px; }
+.rampFacilitator form { display: grid; gap: 12px; }
+.rampFacilitator label { display: grid; gap: 4px; color: var(--ramp-grey-42); font-size: 12px; line-height: 16px; }
+.rampFacilitator input, .rampFacilitator select { width: 100%; height: 40px; padding: 0 10px; border: 1px solid var(--ramp-line-strong); border-radius: 0; background: var(--ramp-white); color: var(--ramp-grey-10); font: inherit; font-size: 14px; }
+.rampFacilitator .primary, .rampFacilitator .secondary, .rampFacilitator .dangerButton, .rampFacilitator .linkButton { min-height: 40px; padding: 0 14px; border-radius: 4px; font: inherit; font-size: 14px; cursor: pointer; }
+.rampFacilitator .primary { border: 1px solid var(--ramp-yellow-54); background: var(--ramp-yellow-54); color: var(--ramp-grey-10); }
+.rampFacilitator .secondary { border: 1px solid var(--ramp-line-strong); background: var(--ramp-white); color: var(--ramp-grey-10); }
+.rampFacilitator .dangerButton { border: 1px solid #b42318; background: var(--ramp-white); color: #b42318; }
+.rampFacilitator .linkButton { min-height: auto; padding: 0; border: 0; background: transparent; color: var(--ramp-grey-10); text-decoration: underline; }
+.rampFacilitator .primary:disabled, .rampFacilitator .secondary:disabled, .rampFacilitator .dangerButton:disabled, .rampFacilitator .linkButton:disabled { opacity: .5; cursor: not-allowed; }
+.rampFacilitator .tableHeader, .rampFacilitator .teamManagementHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.rampFacilitator .tableScroll { overflow-x: auto; }
+.rampFacilitator table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 14px; }
+.rampFacilitator th, .rampFacilitator td { padding: 10px 12px; border-bottom: 1px solid var(--ramp-line); text-align: left; vertical-align: middle; }
+.rampFacilitator thead th { color: var(--ramp-grey-42); font-size: 12px; font-weight: 300; }
+.rampFacilitator tbody th { font-weight: 400; }
+.rampFacilitator .status { display: inline-block; padding: 3px 6px; background: var(--ramp-grey-95); border-radius: 3px; font-size: 11px; line-height: 16px; }
+.rampFacilitator .isSelected { background: var(--ramp-grey-95); }
+.rampFacilitator .fundLimitsFooter, .rampFacilitator .inviteForm { display: flex; align-items: end; gap: 12px; margin-top: 12px; }
+.rampFacilitator .fundLimitsFooter label, .rampFacilitator .inviteForm label { flex: 1; }
+.rampFacilitator .teamManagementPanel { display: grid; gap: 20px; }
+.rampFacilitator .teamManagementHeader { padding-bottom: 16px; border-bottom: 1px solid var(--ramp-line); }
+.rampFacilitator .teamManagementHeader .mutedCopy { margin: 4px 0 0; color: var(--ramp-grey-42); font-size: 14px; }
+.rampFacilitator .membersSection { padding-top: 16px; border-top: 1px solid var(--ramp-line); }
+.rampFacilitator .membersSection > header { margin-bottom: 12px; }
+.rampFacilitator .accessGrid { display: grid; grid-template-columns: minmax(240px, .8fr) minmax(0, 1.2fr); gap: 20px; }
+.rampFacilitator .adminNotice { margin: 0; padding: 10px 12px; background: var(--ramp-grey-94); color: var(--ramp-orange-37); font-size: 14px; }
+.rampFacilitator .error { margin: 0; padding: 10px 12px; background: #fff0ee; color: #b42318; font-size: 14px; }
+.rampFacilitator .negativeBalance { color: #b42318; }
+.rampFacilitator .dialogBackdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 24px; background: rgba(26, 25, 25, .35); }
+.rampFacilitator .dialogPanel { width: min(100%, 480px); padding: 20px; border: 1px solid var(--ramp-line-strong); background: var(--ramp-white); }
+.rampFacilitator .dialogPanel header { margin-bottom: 16px; }
+.rampFacilitator .dialogPanel .mutedCopy { margin: 4px 0 0; color: var(--ramp-grey-42); font-size: 14px; line-height: 20px; }
+.rampFacilitator .dialogActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
 @media (max-width: 760px) {
   .rampAdmin { padding: 24px; }
+  .rampProductAssetGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rampAdminListRow { align-items: flex-start; flex-wrap: wrap; }
+  .rampAdminListRow > .rampAdminActions { width: 100%; margin-left: 0; }
+  .rampFacilitator .adminControls, .rampFacilitator .accessGrid { grid-template-columns: 1fr; }
+  .rampFacilitator .fundLimitsFooter, .rampFacilitator .inviteForm, .rampFacilitator .tableHeader, .rampFacilitator .teamManagementHeader { align-items: stretch; flex-direction: column; }
 }

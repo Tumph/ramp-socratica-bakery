@@ -13,7 +13,7 @@ const money = (cents: number) =>
 export function ProductDetail({
   product,
   areaId,
-  perTeamLimit = 4,
+  perTeamLimit,
   allergens = "Baked in a facility that uses soy.",
 }: {
   product: Product;
@@ -22,10 +22,13 @@ export function ProductDetail({
   allergens?: string;
 }) {
   const { add } = useStoreCart();
+  const soldOut = product.inventoryQuantity === 0;
+  const maximum = Math.min(perTeamLimit ?? product.perTeamLimit, product.inventoryQuantity);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
   function addToCart() {
+    if (soldOut) return;
     for (let i = 0; i < quantity; i += 1) add(product.id);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1400);
@@ -40,20 +43,20 @@ export function ProductDetail({
           <div className="shopDetailTop">
             <h1 className="shopDetailName">{product.name}</h1>
             <p className="shopDetailDesc">{product.description}</p>
-            <span className="shopDetailPrice">{money(product.priceCents)}</span>
+            <span className="shopDetailPrice">{soldOut ? "Sold out" : money(product.priceCents)}</span>
           </div>
 
           <div className="shopDetailActions">
-            <div className="shopQuantityRow">
+            {!soldOut && <div className="shopQuantityRow">
               <div>
                 <p className="shopQuantityLabel">Quantity</p>
-                <p className="shopQuantityLimit">Limit of {perTeamLimit} per team.</p>
+                <p className="shopQuantityLimit">Limit of {perTeamLimit ?? product.perTeamLimit} per team.</p>
               </div>
-              <QuantityStepper value={quantity} max={perTeamLimit} onChange={setQuantity} />
-            </div>
+              <QuantityStepper value={quantity} max={maximum} onChange={setQuantity} />
+            </div>}
 
-            <button type="button" className="shopAddToCart" onClick={addToCart}>
-              {added ? "Added" : "Add to Cart"}
+            <button type="button" className="shopAddToCart" onClick={addToCart} disabled={soldOut}>
+              {soldOut ? "Sold out" : added ? "Added" : "Add to Cart"}
             </button>
 
             <AllergenAlert body={allergens} />
@@ -61,7 +64,7 @@ export function ProductDetail({
         </div>
 
         <div className="shopDetailArt">
-          <img src={`/store/products/${product.id}.png`} alt={product.name} />
+          <img src={`/store/products/${product.imageFilename ?? `${product.id}.png`}`} alt={product.name} />
         </div>
       </div>
     </div>

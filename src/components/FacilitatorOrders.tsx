@@ -13,16 +13,16 @@ export type FacilitatorOrder = {
 
 const money = new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD" });
 
-export function FacilitatorOrders({ initialOrders }: { initialOrders: FacilitatorOrder[] }) {
+export function FacilitatorOrders({ initialOrders, className }: { initialOrders: FacilitatorOrder[]; className?: string }) {
   const [orders, setOrders] = useState<FacilitatorOrder[]>(initialOrders);
   const [error, setError] = useState("");
 
   async function refresh() {
     try {
-      const response = await fetch("/api/facilitator/orders", { cache: "no-store" });
-      const result = await response.json();
+      const response = await fetch("/api/admin/orders", { cache: "no-store" });
+      const result = await response.json() as { error?: string; orders?: FacilitatorOrder[] };
       if (!response.ok) throw new Error(result.error ?? "Unable to load orders.");
-      setOrders(result.orders);
+      setOrders(result.orders ?? []);
       setError("");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to load orders.");
@@ -30,7 +30,7 @@ export function FacilitatorOrders({ initialOrders }: { initialOrders: Facilitato
   }
 
   return (
-    <section className="panel tablePanel" aria-labelledby="recent-orders-heading">
+    <section className={`panel tablePanel ${className ?? ""}`} aria-labelledby="recent-orders-heading">
       <header className="tableHeader">
         <div><p className="eyebrow">Live operations</p><h2 id="recent-orders-heading">Recent orders</h2><p className="mutedCopy">The latest supplier orders and their local transaction state.</p></div>
         <button className="secondary" type="button" onClick={refresh}>Refresh</button>

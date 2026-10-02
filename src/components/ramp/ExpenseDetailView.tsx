@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState } from "react";
 import type { ExpenseDetail, ExpenseField } from "@/lib/ramp/types";
 import { RampIcon } from "./RampIcon";
-import { ReceiptDropZone } from "./ReceiptDropZone";
 
 function FieldRow({ field, onChange }: { field: ExpenseField; onChange: (id: string, value: string) => void }) {
   return (
@@ -64,7 +63,7 @@ export function ExpenseDetailView({ expense }: { expense: ExpenseDetail }) {
       <div className="rampExpenseMain">
         <div className="rampExpenseScroll">
           <div className="rampExpenseInner">
-            <Link href="/ramp/home" className="rampBackLink">
+            <Link href="/ramp" className="rampBackLink">
               <span aria-hidden>&larr;</span> Home
             </Link>
 
@@ -175,15 +174,6 @@ export function ExpenseDetailView({ expense }: { expense: ExpenseDetail }) {
         </footer>
       </div>
 
-      <ReceiptDropZone
-        onFile={() =>
-          setFields((current) =>
-            current.map((f) =>
-              f.id === "receipt" ? { ...f, missing: false, value: "Receipt attached", tone: "default" } : f,
-            ),
-          )
-        }
-      />
     </div>
   );
 }

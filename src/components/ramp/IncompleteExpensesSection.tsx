@@ -1,25 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { IncompleteExpense } from "@/lib/ramp/types";
 import { RampIcon } from "./RampIcon";
 
 function ExpenseCard({ expense, onSubmit }: { expense: IncompleteExpense; onSubmit?: (id: string) => void }) {
   const [spentFrom, setSpentFrom] = useState(expense.spentFrom);
   const [memo, setMemo] = useState(expense.memo ?? "");
-  const [receipt, setReceipt] = useState<File | null>(null);
-  const [dragging, setDragging] = useState(false);
-  const fileInput = useRef<HTMLInputElement>(null);
-
-  // The native input is visually hidden, so it cannot be a drop target itself;
-  // the styled control handles the drag events and feeds the same state.
-  function onDrop(event: React.DragEvent) {
-    event.preventDefault();
-    setDragging(false);
-    const file = event.dataTransfer.files?.[0];
-    if (file) setReceipt(file);
-  }
 
   const amount = `${(expense.amountCents / 100).toFixed(2)} ${expense.currency}`;
   const options = expense.spentFromOptions?.length ? expense.spentFromOptions : [expense.spentFrom];
@@ -62,36 +50,6 @@ function ExpenseCard({ expense, onSubmit }: { expense: IncompleteExpense; onSubm
           </select>
           <RampIcon name="select-chevron" className="rampField2Icon" />
         </div>
-
-        <button
-          type="button"
-          className={dragging ? "rampUpload rampUpload--dragging" : "rampUpload"}
-          onClick={() => fileInput.current?.click()}
-          onDragOver={(event) => { event.preventDefault(); setDragging(true); }}
-          onDragEnter={(event) => { event.preventDefault(); setDragging(true); }}
-          onDragLeave={(event) => {
-            // Ignore drags moving between this button's own children.
-            if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragging(false);
-          }}
-          onDrop={onDrop}
-        >
-          <span className={receipt ? "rampUploadLabel rampUploadLabel--filled" : "rampUploadLabel"}>
-            {dragging
-              ? "Drop the receipt here"
-              : receipt
-                ? receipt.name
-                : `Upload a receipt${expense.receiptRequired ? " (required)" : ""}`}
-          </span>
-          <RampIcon name="upload" />
-        </button>
-        <input
-          ref={fileInput}
-          type="file"
-          accept="image/*,application/pdf"
-          className="rampVisuallyHidden"
-          aria-label="Upload a receipt"
-          onChange={(event) => setReceipt(event.target.files?.[0] ?? null)}
-        />
 
         <div className="rampField2">
           <label className="rampField2Label" htmlFor={`memo-${expense.id}`}>
@@ -145,7 +103,7 @@ export function IncompleteExpensesSection({
         </button>
         <div>
           <h2 className="rampChecklistTitle">Incomplete expenses</h2>
-          <p className="rampChecklistCount">These are missing receipts, memos, or other details</p>
+          <p className="rampChecklistCount">These are missing memos or other details</p>
         </div>
       </div>
 

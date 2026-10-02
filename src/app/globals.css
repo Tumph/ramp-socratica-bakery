@@ -88,9 +88,6 @@ textarea { width: 100%; min-height: 180px; resize: vertical; border: 1px solid v
 input:focus, select:focus, textarea:focus { outline: 2px solid color-mix(in srgb, var(--green), transparent 70%); border-color: var(--green); }
 .authHelp { color: var(--muted); line-height: 1.5; }
 .linkButton { border: 0; background: transparent; color: var(--green); text-decoration: underline; cursor: pointer; }
-.accountBar { margin-bottom: 18px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); display: flex; align-items: center; justify-content: space-between; }
-.accountBar div { display: flex; gap: 10px; align-items: baseline; }
-.accountBar span, .accountBar small { color: var(--muted); }
 .adminConsole { display: grid; gap: 28px; margin-bottom: 42px; }
 .adminGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
 .adminCard { padding: 24px; }
@@ -147,7 +144,6 @@ input:focus, select:focus, textarea:focus { outline: 2px solid color-mix(in srgb
   .invoiceSheet { padding: 28px; }
   .authPanel { grid-template-columns: 1fr; padding: 28px; }
   .authCard { border-left: 0; border-top: 1px solid var(--line); padding: 28px 0 0; }
-  .accountBar div { display: grid; gap: 3px; }
   .adminGrid { grid-template-columns: 1fr; }
   .teamAdminTools, .teamAdminTools form, .memberAdminRow { grid-template-columns: 1fr; }
   .adminTeamsHeader { align-items: start; flex-direction: column; }
@@ -163,10 +159,6 @@ input:focus, select:focus, textarea:focus { outline: 2px solid color-mix(in srgb
 
 button:focus-visible, a:focus-visible { outline: 3px solid color-mix(in srgb, var(--orange), white 20%); outline-offset: 2px; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-.teamSetup { max-width: 920px; margin: 6vh auto; }
-.teamSetupIntro { max-width: 650px; margin-bottom: 36px; }
-.teamSetupIntro h1 { font-size: clamp(42px, 6vw, 68px); }
-.teamSetupIntro > p:last-child { color: var(--muted); font-size: 18px; line-height: 1.6; }
 .teamDirectory { padding: 28px; }
 .teamDirectoryHeader { display: flex; align-items: start; justify-content: space-between; gap: 24px; margin-bottom: 20px; }
 .teamDirectoryHeader h2 { margin-bottom: 6px; }
@@ -183,7 +175,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid color-mix(in srgb, va
 .dialogPanel h2 { margin-bottom: 8px; }
 .dialogPanel form { margin-top: 24px; }
 .dialogActions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
-@media (max-width: 800px) { .teamSetup { margin: 0; } .teamDirectory { padding: 20px; } .teamDirectoryHeader { align-items: stretch; flex-direction: column; } .teamDirectoryHeader .primary { width: 100%; } }
+@media (max-width: 800px) { .teamDirectory { padding: 20px; } .teamDirectoryHeader { align-items: stretch; flex-direction: column; } .teamDirectoryHeader .primary { width: 100%; } }
 
 .adminControls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .inviteForm { display: flex; align-items: end; gap: 12px; margin: 18px 0; }

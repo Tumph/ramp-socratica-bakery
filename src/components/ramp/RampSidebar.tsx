@@ -21,7 +21,7 @@ export function RampSidebar({ items }: { items: NavItem[] }) {
   return (
     <nav className="rampSidebar" aria-label="Primary">
       <div className="rampSidebarHead">
-        <Link href="/ramp/home" aria-label="Ramp home">
+        <Link href="/ramp" aria-label="Ramp home">
           <RampIcon name="logo-mark-grey" size={22} />
         </Link>
       </div>
