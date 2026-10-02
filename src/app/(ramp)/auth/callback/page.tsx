@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { RampHeader } from "@/components/ramp/RampHeader";
 
 export default function AuthCallbackPage() {
   const [error, setError] = useState("");
@@ -42,5 +43,15 @@ export default function AuthCallbackPage() {
     return () => { active = false; };
   }, []);
 
-  return <main><section className="authPanel panel"><p className="eyebrow">Signing in</p><h1>{error ? "Sign-in link didn’t work" : "Finishing sign-in…"}</h1><p>{error || "Please wait a moment."}</p></section></main>;
+  return (
+    <div className="rampShell">
+      <RampHeader />
+      <main className="rampAuth">
+        <div className="rampAuthInner">
+          <h1>{error ? "Sign-in link didn’t work" : "Finishing sign-in…"}</h1>
+          <p className="rampNote">{error || "Please wait a moment."}</p>
+        </div>
+      </main>
+    </div>
+  );
 }
