@@ -16,7 +16,23 @@ const requestSchema = z.object({
   email: z.email().optional(),
   role: z.enum(["ADMIN", "SUPERADMIN", "REMOVE"]).optional(),
   teamName: z.string().trim().min(3).max(80).optional(),
+  inviteEmails: z.string().max(2_000).optional(),
 });
+
+function parseInvitationEmails(value: string | undefined) {
+  const emails = (value ?? "")
+    .split(/[,;\n]/)
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+  const uniqueEmails = [...new Set(emails)];
+
+  if (emails.length !== uniqueEmails.length) throw new Error("Each participant email can only be included once.");
+  if (uniqueEmails.length > 6) throw new Error("A team can have at most six participants.");
+  for (const email of uniqueEmails) {
+    if (!z.email().safeParse(email).success) throw new Error(`Invalid participant email: ${email}`);
+  }
+  return uniqueEmails;
+}
 
 async function requireEventTeam(teamId: string) {
   const { data } = await createAdminClient().from("teams").select("id").eq("id", teamId).eq("event_id", EVENT_ID).maybeSingle();
@@ -26,6 +42,39 @@ async function requireEventTeam(teamId: string) {
 async function requireEventMember(membershipId: string) {
   const { data } = await createAdminClient().from("team_members").select("id").eq("id", membershipId).eq("event_id", EVENT_ID).is("left_at", null).maybeSingle();
   if (!data) throw new Error("Active participant not found in this event.");
+}
+
+async function sendTeamInvitation({
+  admin,
+  actorUserId,
+  teamId,
+  email,
+  origin,
+}: {
+  admin: ReturnType<typeof createAdminClient>;
+  actorUserId: string;
+  teamId: string;
+  email: string;
+  origin: string;
+}) {
+  const token = randomBytes(32).toString("base64url");
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { error: invitationError } = await admin.rpc("admin_create_team_invitation", {
+    target_event_id: EVENT_ID,
+    target_team_id: teamId,
+    target_email: email,
+    target_token_hash: tokenHash,
+    target_expires_at: expiresAt,
+    actor_user_id: actorUserId,
+  });
+  if (invitationError) throw new Error(invitationError.message);
+
+  const { error: emailError } = await admin.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: `${origin}/auth/callback?invite=${encodeURIComponent(token)}` },
+  });
+  if (emailError) throw new Error(emailError.message);
 }
 
 export async function POST(request: Request) {
@@ -39,33 +88,35 @@ export async function POST(request: Request) {
 
     if (input.action === "create_team") {
       if (!input.teamName) throw new Error("A team name is required.");
+      const inviteEmails = parseInvitationEmails(input.inviteEmails);
+      const teamId = randomUUID();
       ({ error } = await admin.rpc("admin_create_empty_team", {
-        target_team_id: randomUUID(),
+        target_team_id: teamId,
         target_event_id: EVENT_ID,
         target_name: input.teamName,
         target_slug: `team-${randomBytes(6).toString("hex")}`,
       }));
+      if (!error && inviteEmails.length) {
+        const origin = new URL(request.url).origin;
+        const failures: string[] = [];
+        let sent = 0;
+        for (const email of inviteEmails) {
+          try {
+            await sendTeamInvitation({ admin, actorUserId: actor.id, teamId, email, origin });
+            sent += 1;
+          } catch (inviteError) {
+            failures.push(`${email} (${inviteError instanceof Error ? inviteError.message : "unable to send"})`);
+          }
+        }
+        if (failures.length) {
+          return NextResponse.json({ ok: true, message: `Team created. Sent ${sent} of ${inviteEmails.length} invitation emails. Retry these from the team: ${failures.join("; ")}` });
+        }
+        return NextResponse.json({ ok: true, message: `Team created and ${sent} invitation email${sent === 1 ? "" : "s"} sent.` });
+      }
     } else if (input.action === "invite_member") {
       if (!input.email || !input.teamId) throw new Error("Participant email and team are required.");
       await requireEventTeam(input.teamId);
-      const token = randomBytes(32).toString("base64url");
-      const tokenHash = createHash("sha256").update(token).digest("hex");
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      ({ error } = await admin.rpc("admin_create_team_invitation", {
-        target_event_id: EVENT_ID,
-        target_team_id: input.teamId,
-        target_email: input.email.toLowerCase(),
-        target_token_hash: tokenHash,
-        target_expires_at: expiresAt,
-        actor_user_id: actor.id,
-      }));
-      if (!error) {
-        const origin = new URL(request.url).origin;
-        ({ error } = await admin.auth.signInWithOtp({
-          email: input.email.toLowerCase(),
-          options: { emailRedirectTo: `${origin}/auth/callback?invite=${encodeURIComponent(token)}` },
-        }));
-      }
+      await sendTeamInvitation({ admin, actorUserId: actor.id, teamId: input.teamId, email: input.email.toLowerCase(), origin: new URL(request.url).origin });
     } else if (input.action === "set_fund_limits") {
       if (!input.fundLimits) throw new Error("At least one team fund limit is required.");
       await Promise.all(input.fundLimits.map(({ teamId }) => requireEventTeam(teamId)));

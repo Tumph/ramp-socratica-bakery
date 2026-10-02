@@ -52,9 +52,10 @@ export function AdminConsole({ teams, admins, deadline, actorRole, className }: 
 
   function submitCreateTeam(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const name = String(new FormData(event.currentTarget).get("team-name") ?? "").trim();
+    const data = new FormData(event.currentTarget);
+    const name = String(data.get("team-name") ?? "").trim();
     if (!name) return setError("Enter a team name.");
-    void action({ action: "create_team", teamName: name });
+    void action({ action: "create_team", teamName: name, inviteEmails: String(data.get("team-member-emails") ?? "") });
     event.currentTarget.reset();
   }
 
@@ -87,7 +88,9 @@ export function AdminConsole({ teams, admins, deadline, actorRole, className }: 
         <p className="eyebrow">Team setup</p><h2>Create a team</h2>
         <form onSubmit={submitCreateTeam}>
           <label htmlFor="team-name">Team name<input id="team-name" name="team-name" required minLength={3} maxLength={80} placeholder="e.g. Team Croissant" /></label>
-          <button className="primary" disabled={working}>Create team</button>
+          <label htmlFor="team-member-emails">Participant emails <span className="mutedCopy">(optional)</span><textarea id="team-member-emails" name="team-member-emails" rows={3} placeholder="ada@example.com, ben@example.com, cy@example.com" aria-describedby="team-member-email-help" /></label>
+          <p id="team-member-email-help" className="mutedCopy">Separate up to six email addresses with commas.</p>
+          <button className="primary" disabled={working}>Create team and send invitations</button>
         </form>
       </section>
     </div>
