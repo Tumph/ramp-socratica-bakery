@@ -7,6 +7,7 @@ import { shopAccess } from "@/lib/teams";
 export const runtime = "nodejs";
 
 const orderSchema = z.object({
+  vendorSlug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(80),
   items: z.array(z.object({
     productId: z.string().min(1).max(80),
     quantity: z.number().int().min(1).max(20),
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
     const input = orderSchema.parse(await request.json());
     const requestId = request.headers.get("idempotency-key");
     const idempotencyKey = requestId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId) ? requestId as `${string}-${string}-${string}-${string}-${string}` : undefined;
-    const order = await createOrder(user.teamId, user.id, user.eventId, input.items, idempotencyKey);
+    const order = await createOrder(user.teamId, user.id, user.eventId, input.items, input.vendorSlug, idempotencyKey);
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to create order.";

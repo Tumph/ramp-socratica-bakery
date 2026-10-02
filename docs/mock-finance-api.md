@@ -104,6 +104,7 @@ The idempotency key is scoped to the shared fund. Retrying an accepted request w
 
 ```ts
 {
+  vendorSlug: string; // registered active store slug
   items: Array<{
     productId: string;
     quantity: number; // integer 1–20
@@ -111,11 +112,18 @@ The idempotency key is scoped to the shared fund. Retrying an accepted request w
 }
 ```
 
+`vendorSlug` chooses the store being checked out. It must be registered in the
+deployment's server-side vendor registry; the browser never supplies the
+merchant name or pricing. The purchase function resolves the registered vendor
+again before posting the authorization and transaction, so the mock Ramp
+activity is billed to that vendor.
+
 ### Success response: `201`
 
 ```ts
 {
   id: string;              // order ID
+  vendorSlug: string;      // registered vendor charged for this order
   invoiceNumber: string;
   totalCents: number;
   transactionId: string;

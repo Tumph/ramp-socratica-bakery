@@ -18,15 +18,18 @@ The system is local to the event application. It has no payment-network connecti
 
 - `team_funds` holds one CAD fund limit and remaining balance per team. An Admin can lower a limit below prior spending, resulting in a negative remaining balance that blocks new purchases.
 - `mock_cards` holds one nonfunctional display card per active participant.
-- `mock_authorizations` records purchase decisions.
+- `vendors` is the trusted registry of simulated merchants. Each storefront has
+  a stable slug and is billed under its own vendor display name.
+- `mock_authorizations` records purchase decisions, including the registered
+  vendor name used for the decision.
 - `mock_transactions` records visible purchase/refund/reversal activity.
 - `fund_ledger_entries` is the immutable history of every fund change.
 
-Supplier checkout calls `post_mock_card_purchase`. The function locks the fund row, checks active membership and card ownership, calculates the server-side catalogue total, and atomically writes the order, transaction, ledger entry, and inventory update.
+Supplier checkout calls `post_mock_card_purchase`. The function locks the fund row, checks idempotency, resolves an active registered vendor, checks active membership and card ownership, calculates the server-side catalogue total, and atomically writes the vendor-attributed order, transaction, ledger entry, and inventory update.
 
 ## Routes
 
-- `/` — supplier shop for an active team member.
+- `/` — account landing page while storefronts are being redesigned.
 - `/teams/:id` — team membership and submission workspace.
 - `/admin` — event Admin console.
 - `/api/orders` — supplier checkout.
