@@ -1,0 +1,1577 @@
+/* Ramp simulator surface. Deliberately isolated from the bakery storefront's
+   warm paper palette in globals.css — this section mirrors Ramp's own UI. */
+
+/* TWK Lausanne, self-hosted. The design uses 300 for field/placeholder text
+   and 400 for headings and the button label. */
+@font-face {
+  font-family: "TWK Lausanne";
+  src: url("/ramp/fonts/twk-lausanne-300.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "TWK Lausanne";
+  src: url("/ramp/fonts/twk-lausanne-400.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --ramp-grey-10: #1a1919;
+  --ramp-grey-42: #6e6a68;
+  --ramp-grey-border: rgba(110, 106, 104, 0.72);
+  --ramp-yellow-54: #e4f222;
+  --ramp-white: #ffffff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ramp-white);
+  color: var(--ramp-grey-10);
+  font-family: "TWK Lausanne", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.rampShell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header ------------------------------------------------------------- */
+
+.rampHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 96px;
+  padding: 0 56px;
+  flex-shrink: 0;
+}
+
+/* The wordmark sits on the baseline and the mark sits flush to the top, so
+   they are placed absolutely rather than flowed — matches node 54:85. */
+.rampLogo {
+  position: relative;
+  display: block;
+  width: 90px;
+  height: 24.18px;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.rampLogo img { position: absolute; display: block; }
+.rampLogo .rampLogoWordmark { left: 0; bottom: 0; width: 59.31px; height: 19.03px; }
+.rampLogo .rampLogoMark { right: 0; top: 0; width: 22.2px; height: 19.03px; }
+
+/* Centred auth column ------------------------------------------------- */
+
+.rampAuth {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px 96px;
+}
+
+.rampAuthInner { width: 576px; max-width: 100%; }
+
+.rampAuthInner h1 {
+  margin: 0 0 20px;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 32px;
+  letter-spacing: -0.56px;
+  color: var(--ramp-grey-10);
+}
+
+.rampForm { display: flex; flex-direction: column; }
+
+/* Field --------------------------------------------------------------- */
+
+.rampField {
+  position: relative;
+  height: 56px;
+  background: var(--ramp-white);
+  border: 1px solid var(--ramp-grey-border);
+}
+
+.rampField input {
+  width: 100%;
+  height: 100%;
+  padding: 7px 16px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 300;
+  color: var(--ramp-grey-10);
+}
+
+.rampField input::placeholder { color: var(--ramp-grey-42); }
+.rampField:focus-within { border-color: var(--ramp-grey-10); }
+
+.rampFieldError { border-color: #c5271a; }
+
+.rampError {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: #c5271a;
+}
+
+/* Submit -------------------------------------------------------------- */
+
+.rampSubmit {
+  height: 56px;
+  margin-top: 16px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  border: 1px solid var(--ramp-yellow-54);
+  background: var(--ramp-yellow-54);
+  color: var(--ramp-grey-10);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  cursor: pointer;
+  transition: filter 120ms ease;
+}
+
+.rampSubmit:hover:not(:disabled) { filter: brightness(0.95); }
+.rampSubmit:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.rampFormFooter { height: 12px; }
+
+.rampNote {
+  margin: 24px 0 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ramp-grey-42);
+}
+
+@media (max-width: 640px) {
+  .rampHeader { height: 72px; padding: 0 24px; }
+  .rampAuth { padding: 0 24px 64px; align-items: flex-start; padding-top: 48px; }
+  .rampAuthInner h1 { font-size: 24px; line-height: 28px; }
+}
+
+/* ===================================================================
+   Signed-in app shell (home, wallet, expenses)
+   Tokens lifted from node 18:2322.
+   =================================================================== */
+
+:root {
+  --ramp-grey-95: #f4f2f0;   /* sidebar */
+  --ramp-grey-98: #fcfbfa;   /* page */
+  --ramp-grey-94: #feffe1;   /* notice fill */
+  --ramp-line: #e9e5e2;
+  --ramp-line-strong: #d2cecb;
+  --ramp-yellow-74: #f5ff78; /* nav badge */
+  --ramp-orange-37: #876634; /* notice text */
+  --ramp-orange-43: #af7a2b; /* notice border */
+  --ramp-azure-58: #5683d2;  /* progress fill */
+}
+
+.rampIcon { display: block; flex-shrink: 0; }
+.rampIcon--collapsed { transform: rotate(-90deg); }
+
+.rampApp { display: flex; min-height: 100vh; background: var(--ramp-grey-98); }
+
+/* Sidebar -------------------------------------------------------- */
+
+.rampSidebar {
+  width: 220.5px;
+  flex-shrink: 0;
+  background: var(--ramp-grey-95);
+  display: flex;
+  flex-direction: column;
+}
+
+.rampSidebarHead { height: 48px; display: flex; align-items: center; padding: 0 20px; }
+
+.rampNav { list-style: none; margin: 0; padding: 12px 12px 0; display: flex; flex-direction: column; gap: 2px; }
+
+.rampNavItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  color: var(--ramp-grey-10);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.rampNavItem:hover { background: rgba(26, 25, 25, 0.04); }
+.rampNavItem--active { background: var(--ramp-line); }
+
+/* Inert rows are <button>, so reset the UA styling to match the links. */
+.rampNavItem--inert {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: left;
+  cursor: default;
+}
+.rampNavLabel { flex: 1; }
+
+.rampNavBadge {
+  height: 22px;
+  min-width: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ramp-yellow-74);
+  border: 1px solid var(--ramp-yellow-74);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+/* Main column ---------------------------------------------------- */
+
+.rampMain { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.rampTopBar {
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 24px 0 56px;
+}
+
+.rampSearch {
+  flex: 1;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--ramp-grey-95);
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.rampSearchLabel { flex: 1; font-size: 14px; line-height: 20px; color: var(--ramp-grey-10); }
+
+.rampKbd {
+  min-width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 4px;
+  background: var(--ramp-white);
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--ramp-grey-42);
+}
+
+.rampTopBarActions { display: flex; align-items: center; gap: 8px; }
+
+.rampIconBtn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.rampIconBtn:hover { background: var(--ramp-line); }
+
+.rampAvatarBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  padding: 0 4px;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.rampAvatarBtn:hover { background: var(--ramp-line); }
+
+.rampAvatar {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #deb1b9;
+  color: var(--ramp-grey-10);
+  font-size: 12px;
+}
+
+.rampContent { flex: 1; padding-bottom: 16px; }
+
+/* Home layout ---------------------------------------------------- */
+
+.rampHomeGrid { display: flex; align-items: flex-start; gap: 0; }
+/* 16px under the last card so a long feed does not end flush against the
+   viewport when scrolled to the bottom. */
+.rampFeed { flex: 1; min-width: 0; max-width: 905.5px; padding: 32px 56px 16px; }
+
+.rampGreeting {
+  margin: 0 0 16px;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 32px;
+  letter-spacing: -0.56px;
+}
+
+/* Notice --------------------------------------------------------- */
+
+.rampNotice {
+  display: flex;
+  /* The actions sit level with the end of the body copy, not centred on the
+     whole notice -- with a two-line body that reads noticeably lower. */
+  align-items: flex-end;
+  gap: 16px;
+  padding: 15px 16px;
+  background: var(--ramp-grey-94);
+  border: 1px solid var(--ramp-orange-43);
+}
+
+.rampNoticeBody { flex: 1; min-width: 0; }
+.rampNoticeHead { display: flex; align-items: flex-start; gap: 8px; }
+/* The design seats this glyph in a 16x24 box 3.5px from the top (node
+   142:2294) so it optically centres against the 24px title line. */
+.rampNoticeHead .rampIcon { margin-top: 3.5px; }
+
+.rampNoticeTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: -0.32px;
+  color: var(--ramp-orange-37);
+}
+
+.rampNoticeText {
+  margin: 2px 0 0 24px;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 20px;
+  color: var(--ramp-orange-37);
+}
+
+.rampNoticeActions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.rampNoticeDismiss:hover { background: rgba(175, 122, 43, 0.12); }
+
+/* Buttons -------------------------------------------------------- */
+
+.rampBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.rampBtn--block { width: 100%; }
+
+.rampBtn--secondary {
+  background: var(--ramp-white);
+  border: 1px solid var(--ramp-line-strong);
+  color: var(--ramp-grey-10);
+}
+
+.rampBtn--secondary:hover { background: var(--ramp-grey-95); }
+
+.rampBtn--primary {
+  background: var(--ramp-yellow-54);
+  border: 1px solid var(--ramp-yellow-54);
+  color: var(--ramp-grey-10);
+}
+
+.rampBtn--primary:hover { filter: brightness(0.95); }
+
+/* Checklist ------------------------------------------------------ */
+
+.rampChecklist { margin-top: 32px; }
+.rampChecklistHead { display: flex; align-items: flex-start; gap: 8px; margin-left: -36px; }
+
+.rampCollapse {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.rampCollapse:hover { background: var(--ramp-line); }
+
+.rampChecklistTitle { margin: 0; font-size: 16px; font-weight: 400; line-height: 24px; letter-spacing: -0.32px; }
+.rampChecklistCount { margin: 2px 0 0; font-size: 14px; font-weight: 300; line-height: 20px; color: var(--ramp-grey-42); }
+
+.rampRule { margin: 40px 0 0; border: 0; border-top: 1px solid var(--ramp-line); }
+
+.rampTasks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+
+.rampTask { display: flex; align-items: center; gap: 24px; padding: 12px 0; }
+
+.rampTaskAvatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--ramp-line);
+}
+
+.rampTaskImage { width: 32px; height: 32px; display: block; border-radius: 50%; }
+.rampTaskText { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.rampTaskTitle { font-size: 16px; line-height: 24px; letter-spacing: -0.32px; }
+.rampTaskDesc { font-size: 14px; font-weight: 300; line-height: 20px; color: var(--ramp-grey-42); }
+
+/* Wallet sidebar ------------------------------------------------- */
+
+.rampWallet { width: 344px; flex-shrink: 0; padding: 40px 48px 0 0; }
+.rampWalletActions { display: flex; flex-direction: column; gap: 8px; padding: 0 8px; }
+.rampWalletList { margin-top: 24px; }
+
+.rampWalletHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+}
+
+.rampWalletTitle { margin: 0; font-size: 14px; font-weight: 300; line-height: 20px; color: var(--ramp-grey-42); }
+
+.rampViewAll {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4.55px;
+  padding-right: 3.5px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ramp-grey-42);
+  text-decoration: none;
+}
+
+.rampViewAllArrow { font-size: 11.2px; line-height: 20px; }
+.rampViewAll:hover { color: var(--ramp-grey-10); }
+
+/* Rendered as <button> when inert, so reset the UA styling to match the link. */
+.rampViewAll--inert { padding: 0; border: 0; background: transparent; font: inherit; cursor: default; }
+
+.rampCardRows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+
+/* Rendered as <button>, <a> or <div> depending on the card, so the UA button
+   styling is reset here to keep all three identical. */
+.rampCardRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+}
+
+button.rampCardRow, a.rampCardRow { cursor: pointer; }
+
+.rampCardRow:hover { background: var(--ramp-grey-95); }
+
+.rampCardRowTop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+
+.rampCardName {
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rampCardAmount { font-size: 14px; font-weight: 300; line-height: 20px; color: var(--ramp-grey-42); flex-shrink: 0; }
+
+.rampProgress { display: block; height: 4px; background: var(--ramp-line); }
+.rampProgressFill { display: block; height: 4px; background: var(--ramp-azure-58); }
+
+@media (max-width: 1100px) {
+  .rampHomeGrid { flex-direction: column; }
+  .rampWallet { width: 100%; padding: 0 56px 40px; }
+  .rampFeed { max-width: none; }
+}
+
+@media (max-width: 760px) {
+  .rampSidebar { display: none; }
+  .rampFeed, .rampWallet { padding-left: 24px; padding-right: 24px; }
+  .rampTopBar { padding-left: 24px; }
+  .rampChecklistHead { margin-left: 0; }
+}
+
+/* ===================================================================
+   Incomplete expenses (node 138:4469)
+   =================================================================== */
+
+:root {
+  --ramp-green-border: #24863e;    /* submit border */
+  --ramp-green-text: #26763b;      /* submit label */
+}
+
+.rampIncomplete { margin-top: 32px; }
+
+.rampVisuallyHidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Stacked panels share a border: the header's bottom edge is the body's top. */
+.rampExpenseStack { margin-top: 12px; }
+
+.rampExpense { background: var(--ramp-white); }
+
+.rampExpenseHead {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  border: 1px solid var(--ramp-line-strong);
+  margin-bottom: -1px;
+  position: relative;
+}
+
+.rampExpenseAvatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--ramp-white);
+  box-shadow: inset 0 0 0 1px rgba(185, 180, 177, 0.1);
+}
+
+.rampExpenseAvatar img { width: 32px; height: 32px; display: block; object-fit: cover; }
+.rampExpenseMonogram { font-size: 14px; color: var(--ramp-grey-42); }
+
+/* Now an <a> into the detail page, so the UA underline has to be cleared. */
+.rampExpenseMeta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 3px 0;
+  text-decoration: none;
+  color: inherit;
+}
+.rampExpenseTitle { font-size: 16px; font-weight: 300; line-height: 24px; color: var(--ramp-grey-10); }
+.rampExpenseDate { font-size: 14px; font-weight: 300; line-height: 20px; color: var(--ramp-grey-42); }
+
+.rampExpenseBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--ramp-line-strong);
+}
+
+/* Floating-label field ------------------------------------------- */
+
+.rampField2 {
+  position: relative;
+  min-height: 56px;
+  display: flex;
+  align-items: flex-end;
+  background: var(--ramp-white);
+  border: 1px solid var(--ramp-line-strong);
+  padding: 7px 12px;
+}
+
+.rampField2:focus-within { border-color: var(--ramp-grey-10); }
+
+.rampField2Label {
+  position: absolute;
+  top: 7px;
+  left: 12px;
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 16px;
+  color: var(--ramp-grey-42);
+  pointer-events: none;
+}
+
+.rampRequired { color: var(--ramp-grey-42); }
+
+.rampField2Control {
+  width: 100%;
+  margin-top: 16px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 24px;
+  color: var(--ramp-grey-10);
+  appearance: none;
+}
+
+.rampField2Icon { position: absolute; right: 12px; bottom: 16px; pointer-events: none; }
+
+/* Receipt upload -------------------------------------------------- */
+
+.rampUpload {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  height: 56px;
+  padding: 16px 12px;
+  background: var(--ramp-white);
+  border: 1px solid var(--ramp-line-strong);
+  cursor: pointer;
+  text-align: left;
+}
+
+.rampUpload:hover { border-color: var(--ramp-grey-42); }
+.rampUploadLabel { font-size: 16px; font-weight: 300; line-height: 24px; color: var(--ramp-grey-42); }
+.rampUploadLabel--filled { color: var(--ramp-grey-10); }
+
+/* Submit ---------------------------------------------------------- */
+
+.rampSubmitExpense {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  background: var(--ramp-white);
+  border: 1px solid var(--ramp-green-border);
+  color: var(--ramp-green-text);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.rampSubmitExpense:hover:not(:disabled) { background: rgba(38, 118, 59, 0.06); }
+.rampSubmitExpense:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Dev-only state toggle ------------------------------------------- */
+
+.rampDevToggle {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--ramp-grey-10);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+.rampDevToggleLabel { font-size: 11px; color: #b9b4b1; padding-right: 2px; }
+
+.rampDevToggleBtn {
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.rampDevToggleBtn--on { background: var(--ramp-yellow-54); color: var(--ramp-grey-10); }
+
+/* ===================================================================
+   Card detail drawer (node 21:4097)
+   =================================================================== */
+
+.rampDrawerBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(26, 25, 25, 0.12);
+  backdrop-filter: blur(2px);
+}
+
+.rampDrawer {
+  position: relative;
+  animation: rampDrawerIn var(--ramp-drawer-duration, 420ms) var(--ramp-drawer-ease, cubic-bezier(0.16, 1, 0.3, 1)) both;
+  width: 720px;
+  max-width: 100%;
+  background: var(--ramp-white);
+  overflow-y: auto;
+  outline: none;
+  box-shadow: -12px 0 40px rgba(26, 25, 25, 0.12);
+}
+
+.rampDrawerClose {
+  position: absolute;
+  top: 8px;
+  right: 19px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.rampDrawerClose:hover { background: var(--ramp-line); }
+
+/* Header ---------------------------------------------------------- */
+
+.rampDrawerHead { padding: 56px 40px 0; }
+
+.rampDrawerTitleRow { display: flex; align-items: flex-start; gap: 16px; }
+/* The artwork's circle sits at (31.17, 24) r24 in a 55.17x55.709 viewBox, so
+   the crop targets that circle rather than the element box. */
+.rampDrawerAvatar {
+  width: 56px;
+  height: 56px;
+  display: block;
+  flex-shrink: 0;
+  clip-path: circle(43.5% at 56.5% 43.1%);
+}
+.rampDrawerTitleText { flex: 1; min-width: 0; }
+
+.rampDrawerTitle {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 300;
+  line-height: 48px;
+  letter-spacing: -0.8px;
+  color: var(--ramp-grey-10);
+}
+
+.rampDrawerSubLink {
+  display: inline-block;
+  margin-top: 2px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ramp-grey-10);
+  text-decoration: underline;
+  text-underline-position: from-font;
+}
+
+.rampDrawerActions { flex-shrink: 0; }
+
+/* Tabs ------------------------------------------------------------- */
+
+.rampTabs {
+  display: flex;
+  align-items: flex-end;
+  /* The rule spans the whole drawer; the tabs stay on the 40px content inset. */
+  margin: 24px -40px 0;
+  padding-left: 40px;
+  border-bottom: 1px solid var(--ramp-line);
+}
+
+.rampTab {
+  height: 48px;
+  padding: 0 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--ramp-grey-42);
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+
+.rampTab:hover { color: var(--ramp-grey-10); }
+.rampTab--active { color: var(--ramp-grey-10); border-bottom-color: var(--ramp-grey-10); }
+
+/* Body ------------------------------------------------------------- */
+
+.rampDrawerBody { display: flex; flex-direction: column; }
+
+/* Full-bleed: the panel spans the drawer, its content is inset 40px. */
+.rampSpendPanel { background: var(--ramp-grey-98); padding: 32px 40px; }
+
+.rampSpendRow { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+
+.rampSpendFigure { margin: 0; display: flex; align-items: flex-end; gap: 6px; color: var(--ramp-grey-10); }
+.rampSpendFigure--right { text-align: right; }
+.rampSpendFigure strong { font-size: 28px; font-weight: 300; line-height: 32px; }
+.rampSpendFigure span { font-size: 16px; font-weight: 300; line-height: 24px; }
+
+.rampSpendBar { display: block; height: 4px; margin-top: 12px; background: var(--ramp-line); }
+.rampSpendBarFill { display: block; height: 4px; background: var(--ramp-azure-58); }
+
+.rampSpendFoot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 8px;
+}
+
+.rampSpendFoot p { margin: 0; font-size: 12px; font-weight: 300; line-height: 16px; color: var(--ramp-grey-42); }
+.rampSpendFoot a { color: inherit; text-decoration: underline; text-underline-position: from-font; }
+
+/* Card artwork + meta --------------------------------------------- */
+
+.rampCardBlock { display: flex; align-items: flex-start; gap: 24px; margin-top: 56px; }
+
+.rampCardFace {
+  width: 282px;
+  height: 177px;
+  flex-shrink: 0;
+  /* The 7fr/3fr split lives on .rampCardFaceSide; nesting a second grid here
+     would strand the grey strip above the card's bottom edge. */
+  display: block;
+  padding: 1px;
+  background: var(--ramp-white);
+  border: 1px solid var(--ramp-line-strong);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.rampCardFaceTop { display: flex; align-items: flex-start; justify-content: space-between; padding: 16px; }
+.rampCardFaceLogo { width: 69px; height: 20px; display: block; }
+.rampCardFaceVisa { width: 69px; height: 29px; display: block; }
+.rampCardFaceBottom { display: flex; align-items: center; justify-content: flex-end; padding: 8px 16px; background: var(--ramp-grey-98); }
+
+.rampCardFaceNumber {
+  /* The design sets this line in Menlo. */
+  font-family: Menlo, "SF Mono", ui-monospace, monospace;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ramp-grey-42);
+}
+
+.rampCardMeta { margin: 0; flex: 1; min-width: 0; }
+.rampCardMeta dt { font-size: 12px; font-weight: 300; line-height: 16px; color: var(--ramp-grey-42); }
+.rampCardMeta dt:not(:first-child) { margin-top: 12px; }
+
+.rampCardMeta dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 24px;
+  color: var(--ramp-grey-10);
+}
+
+.rampCopy {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.65;
+}
+
+.rampCopy:hover { opacity: 1; background: var(--ramp-line); }
+
+.rampCopied {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 4px);
+  transform: translateX(-50%);
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--ramp-grey-10);
+  color: #fff;
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+/* What's issued ---------------------------------------------------- */
+
+.rampIssued { padding: 40px 40px 0; }
+
+.rampIssuedToggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ramp-grey-10);
+  font: inherit;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: -0.32px;
+  cursor: pointer;
+}
+
+.rampIssuedList { list-style: none; margin: 12px 0 0; padding: 0 0 0 24px; display: flex; flex-direction: column; gap: 4px; }
+.rampIssuedList li { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 300; line-height: 24px; }
+
+/* Policies --------------------------------------------------------- */
+
+.rampPolicies { padding: 48px 40px 40px; }
+
+.rampDrawerSectionTitle { margin: 0 0 12px; font-size: 20px; font-weight: 300; line-height: 28px; letter-spacing: -0.4px; }
+
+.rampPolicyPanel {
+  padding: 16px;
+  border: 1px solid var(--ramp-line-strong);
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 24px;
+}
+
+.rampEmpty { margin: 0; padding: 64px 40px; text-align: center; font-size: 16px; font-weight: 300; color: var(--ramp-grey-42); }
+
+@media (max-width: 760px) {
+  .rampDrawer { width: 100%; }
+  .rampDrawerHead { padding-left: 24px; padding-right: 24px; }
+  .rampTabs { margin-left: -24px; margin-right: -24px; padding-left: 24px; }
+  .rampSpendPanel, .rampIssued, .rampPolicies { padding-left: 24px; padding-right: 24px; }
+  .rampCardBlock { flex-direction: column; }
+}
+
+/* Card reveal ------------------------------------------------------ */
+
+.rampCardFlip { width: 282px; height: 177px; flex-shrink: 0; perspective: 1200px; }
+
+@keyframes rampDrawerIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.rampCardFlipInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform var(--ramp-flip-duration, 460ms) var(--ramp-flip-ease, cubic-bezier(0.45, 0.05, 0.55, 0.95));
+}
+
+.rampCardFlip--revealed .rampCardFlipInner { transform: rotateY(180deg); }
+
+.rampCardFlip .rampCardFace {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rampCardFace--button {
+  border: 1px solid var(--ramp-line-strong);
+  background: var(--ramp-white);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow 160ms ease;
+}
+
+/* Shadow taken from the hover variant, node 21:3275; shared by both faces. */
+.rampCardFlip { --ramp-card-shadow: 1px 4px 8px rgba(0, 0, 0, 0.15), 2px 12px 24px rgba(0, 0, 0, 0.1); }
+
+.rampCardFace--button:hover { box-shadow: var(--ramp-card-shadow); }
+
+.rampCardFaceSide { display: grid; grid-template-rows: 7fr 3fr; width: 100%; height: 100%; }
+
+.rampCardHint {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  padding: 6px 12px;
+  background: var(--ramp-white);
+  border: 1px solid var(--ramp-line-strong);
+  color: var(--ramp-grey-10);
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+  z-index: 1;
+}
+
+.rampCardFace--button:hover .rampCardHint,
+.rampCardFace--button:focus-visible .rampCardHint {
+  opacity: 1;
+  /* Held until after the flip settles, tracking the tuned duration. */
+  transition-delay: calc(var(--ramp-flip-duration, 460ms) + 120ms);
+}
+
+/* While revealed the pointer still sits over the front face, so :hover stays
+   latched and the hint/shadow would be painted as the card rotates back. */
+.rampCardFlip--revealed .rampCardFace--button {
+  pointer-events: none;
+  box-shadow: none;
+}
+
+/* Must out-specify the :hover rule above -- `pointer-events: none` alone does
+   not clear a :hover that was already latched before the pointer stopped. */
+.rampCardFlip--revealed .rampCardFace--button:hover .rampCardHint,
+.rampCardFlip--revealed .rampCardFace--button:focus-visible .rampCardHint,
+.rampCardFlip--revealed .rampCardHint {
+  opacity: 0;
+  transition-delay: 0ms;
+}
+
+.rampCardFace--back {
+  transform: rotateY(180deg);
+  cursor: pointer;
+  background: var(--ramp-white);
+  border: 1px solid var(--ramp-line-strong);
+  transition: box-shadow 160ms ease;
+}
+
+.rampCardFace--back:hover { box-shadow: var(--ramp-card-shadow); }
+
+/* Mirror of the front's rule: the back also keeps a latched :hover while it is
+   face-down, which would sweep the shadow through the flip. */
+.rampCardFlip:not(.rampCardFlip--revealed) .rampCardFace--back {
+  pointer-events: none;
+  box-shadow: none;
+}
+
+.rampCardBackTop { padding: 20px 16px 0; display: flex; flex-direction: column; gap: 14px; }
+
+.rampCardBackNumber,
+.rampCardBackValue {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: Menlo, "SF Mono", ui-monospace, monospace;
+  font-size: 17px;
+  line-height: 22px;
+  color: var(--ramp-grey-10);
+}
+
+.rampCardBackRow { display: flex; gap: 40px; }
+
+.rampCardBackLabel {
+  display: block;
+  font-family: Menlo, "SF Mono", ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ramp-grey-42);
+}
+
+.rampCardBackValue { font-size: 16px; line-height: 22px; }
+.rampCardFaceBottom--back { justify-content: flex-end; }
+
+.rampCardHide {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.rampCardHide:hover { background: var(--ramp-line); }
+
+.rampUpload--dragging {
+  border-color: var(--ramp-grey-10);
+  background: var(--ramp-grey-95);
+}
+
+.rampUpload--dragging .rampUploadLabel { color: var(--ramp-grey-10); }
+
+/* Dev-only animation tuner ---------------------------------------- */
+
+.rampTuner { position: fixed; left: 16px; bottom: 16px; z-index: 60; font-size: 11px; }
+
+.rampTunerToggle {
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--ramp-grey-10);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+.rampTunerBody {
+  width: 260px;
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--ramp-grey-10);
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.rampTunerHead { margin: 6px 0 4px; color: var(--ramp-yellow-54); font-size: 11px; }
+.rampTunerRow { display: grid; grid-template-columns: 26px 1fr 42px; gap: 6px; align-items: center; margin: 2px 0; }
+.rampTunerRow input { width: 100%; }
+.rampTunerRow output { text-align: right; color: #b9b4b1; }
+
+.rampTunerPresets { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+
+.rampTunerPresets button {
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.rampTunerPresets button:hover { background: rgba(255, 255, 255, 0.28); }
+
+.rampTunerCss {
+  margin: 8px 0 6px;
+  padding: 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #d9d5d2;
+  font-size: 10px;
+  line-height: 14px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.rampTunerCopy {
+  width: 100%;
+  padding: 5px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--ramp-yellow-54);
+  color: var(--ramp-grey-10);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ===================================================================
+   Expense detail page (node 159:5586)
+   =================================================================== */
+
+.rampExpensePage { display: flex; align-items: stretch; min-height: calc(100vh - 48px); }
+
+/* Left column 749.7 / right 499.8, per the design. */
+.rampExpenseMain {
+  flex: 0 0 749.7px;
+  max-width: 749.7px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rampExpenseScroll { flex: 1; min-height: 0; }
+.rampExpenseInner { max-width: 738.7px; padding: 16px 56px 40px; }
+
+.rampBackLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ramp-grey-10);
+  text-decoration: none;
+}
+
+.rampBackLink:hover { text-decoration: underline; }
+
+/* Header ---------------------------------------------------------- */
+
+.rampExpenseHeader { margin-top: 24px; }
+.rampExpenseLogo { width: 64px; height: 64px; display: block; border-radius: 50%; }
+
+.rampExpenseHeading {
+  margin: 19px 0 0;
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 48px;
+  letter-spacing: -0.8px;
+  color: var(--ramp-grey-10);
+}
+
+.rampExpenseMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 8px;
+}
+
+.rampExpenseMetaText { margin: 0; font-size: 14px; font-weight: 300; line-height: 20px; color: var(--ramp-grey-42); }
+.rampExpenseMetaText a { color: var(--ramp-grey-42); text-decoration: underline; text-underline-position: from-font; }
+
+.rampLinkMenu {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ramp-grey-10);
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  text-decoration: underline;
+  text-underline-position: from-font;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Notice ---------------------------------------------------------- */
+
+.rampExpenseNotice { margin-top: 36px; align-items: center; }
+.rampExpenseNoticeText { margin-left: 0; }
+.rampExpenseNotice .rampNoticeTitle { margin-bottom: 2px; }
+
+/* Details --------------------------------------------------------- */
+
+.rampDetails { margin-top: 36px; }
+
+.rampSectionHead { display: flex; align-items: center; gap: 8px; margin-left: -40px; }
+.rampSectionHead h2 { margin: 0 0 0 8px; font-size: 20px; font-weight: 400; line-height: 28px; letter-spacing: -0.4px; }
+.rampSectionAction { margin-left: auto; }
+
+.rampBadge {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--ramp-line);
+  color: var(--ramp-grey-10);
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 16px;
+}
+
+.rampBadge--positive { background: #e7f3ea; color: var(--ramp-green-text); }
+
+/* Label column 210px, values from 218px — a 50px row step. */
+.rampFieldGrid {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  column-gap: 8px;
+  row-gap: 12px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.rampFieldLabel { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 300; line-height: 20px; color: var(--ramp-grey-10); }
+.rampFieldValue { min-width: 0; }
+
+.rampFieldSelect { position: relative; display: inline-flex; align-items: center; }
+
+.rampFieldSelect select {
+  appearance: none;
+  padding: 4px 24px 4px 4px;
+  margin-left: -4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 20px;
+  color: var(--ramp-grey-10);
+  cursor: pointer;
+}
+
+.rampFieldSelect select:hover { background: var(--ramp-grey-95); }
+.rampFieldSelect .rampIcon { position: absolute; right: 6px; pointer-events: none; }
+
+.rampFieldMissing,
+.rampFieldSuggestion {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  margin-left: -4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-position: from-font;
+}
+
+.rampFieldMissing { color: #b74018; }
+.rampFieldSuggestion { color: var(--ramp-azure-42, #425e93); }
+.rampFieldMissing:hover, .rampFieldSuggestion:hover { background: var(--ramp-grey-95); }
+
+.rampFieldStatic { font-size: 14px; font-weight: 300; line-height: 20px; color: var(--ramp-grey-10); }
+
+.rampFieldInput {
+  width: 100%;
+  padding: 4px;
+  margin-left: -4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 20px;
+  color: var(--ramp-grey-10);
+}
+
+.rampFieldInput--suggestion { color: var(--ramp-azure-42, #425e93); }
+.rampFieldInput::placeholder { color: var(--ramp-grey-42); }
+.rampFieldInput:hover { background: var(--ramp-grey-95); }
+
+.rampFieldInput:focus {
+  outline: none;
+  background: var(--ramp-white);
+  border-color: var(--ramp-grey-10);
+}
+
+.rampRequirements { margin: 16px 0 0; font-size: 12px; font-weight: 300; line-height: 16px; color: var(--ramp-grey-42); }
+.rampRequirements a { color: var(--ramp-grey-42); text-decoration: underline; text-underline-position: from-font; }
+
+/* Collapsed sections + activity ------------------------------------ */
+
+.rampCollapsedSection { margin-top: 36px; }
+.rampActivity { margin-top: 36px; }
+
+.rampTimeline { list-style: none; margin: 24px 0 0; padding: 0; }
+.rampTimeline li { position: relative; display: flex; align-items: flex-start; gap: 12px; padding-bottom: 28px; }
+.rampTimeline li:last-child { padding-bottom: 0; }
+
+.rampTimeline li::before {
+  content: "";
+  position: absolute;
+  left: 11.5px;
+  top: 28px;
+  bottom: 4px;
+  width: 1px;
+  background: var(--ramp-line);
+}
+
+.rampTimeline li:last-child::before { display: none; }
+
+.rampTimelineAvatar {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--ramp-grey-95);
+}
+
+.rampTimelineAvatar img { width: 24px; height: 24px; display: block; object-fit: cover; }
+.rampTimelineText { font-size: 14px; font-weight: 300; line-height: 20px; color: var(--ramp-grey-10); padding-top: 2px; }
+
+/* Sticky footer ---------------------------------------------------- */
+
+.rampExpenseFooter {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 67px 12px 56px;
+  border-top: 1px solid var(--ramp-line);
+  background: var(--ramp-white);
+}
+
+.rampSubmitWide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--ramp-grey-95);
+  background: var(--ramp-grey-95);
+  color: var(--ramp-grey-42);
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.rampSubmitWide:disabled { cursor: not-allowed; }
+
+.rampSubmitWide:not(:disabled) {
+  border-color: var(--ramp-green-border);
+  background: var(--ramp-white);
+  color: var(--ramp-green-text);
+}
+
+/* Right preview column --------------------------------------------- */
+
+.rampPreview {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  padding: 24px;
+  border-left: 1px solid var(--ramp-line);
+  background: var(--ramp-grey-98);
+}
+
+.rampDropZone {
+  flex: 1;
+  min-height: 160px;
+  display: grid;
+  place-items: center;
+  padding: 40px;
+  border: 1px dashed var(--ramp-line-strong);
+  background: var(--ramp-white);
+  font: inherit;
+  cursor: pointer;
+}
+
+.rampDropZone--dragging { border-color: var(--ramp-grey-10); background: var(--ramp-grey-95); }
+.rampDropZoneInner { display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 371px; text-align: center; }
+.rampDropZoneTitle { font-size: 16px; font-weight: 300; line-height: 24px; color: var(--ramp-grey-42); }
+.rampDropZoneHint { font-size: 12px; font-weight: 300; line-height: 16px; color: var(--ramp-grey-42); }
+
+@media (max-width: 1100px) {
+  .rampExpensePage { flex-direction: column; }
+  .rampExpenseMain { flex: 1 1 auto; max-width: none; }
+  .rampPreview { border-left: 0; border-top: 1px solid var(--ramp-line); min-height: 320px; }
+}
+
+@media (max-width: 760px) {
+  .rampExpenseInner { padding-left: 24px; padding-right: 24px; }
+  .rampSectionHead { margin-left: 0; }
+  .rampFieldGrid { grid-template-columns: 1fr; row-gap: 4px; }
+  .rampExpenseFooter { padding-left: 24px; padding-right: 24px; }
+}
+
+/* ===================================================================
+   Admin console
+   =================================================================== */
+
+.rampAdmin { padding: 32px 56px 56px; max-width: 1040px; }
+
+.rampAdminHead { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.rampAdminHeadActions { display: flex; gap: 8px; }
+.rampAdminHead h1 { margin: 0; font-size: 40px; font-weight: 300; line-height: 48px; letter-spacing: -0.8px; }
+
+.rampAdmin .rampTabs { margin-top: 24px; }
+.rampAdminBody { padding-top: 24px; }
+.rampAdminStack { display: flex; flex-direction: column; gap: 16px; }
+
+.rampAdminNote { margin: 0; font-size: 14px; font-weight: 300; line-height: 20px; color: var(--ramp-grey-42); }
+.rampAdminNote a { color: var(--ramp-grey-10); }
+.rampAdminHint { margin: 10px 0 0; font-size: 12px; font-weight: 300; line-height: 16px; color: var(--ramp-grey-42); }
+
+.rampAdminCard { padding: 16px; border: 1px solid var(--ramp-line-strong); background: var(--ramp-white); }
+
+.rampAdminRowHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.rampAdminCount { font-size: 12px; color: var(--ramp-grey-42); }
+
+.rampAdminGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.rampAdminWide { grid-column: 1 / -1; }
+
+.rampAdminGrid label,
+.rampAdminSelect { display: flex; flex-direction: column; gap: 4px; }
+.rampAdminGrid label > span,
+.rampAdminSelect > span { font-size: 12px; line-height: 16px; color: var(--ramp-grey-42); }
+
+.rampAdminGrid input,
+.rampAdminSelect select {
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--ramp-line-strong);
+  background: var(--ramp-white);
+  font: inherit;
+  font-size: 14px;
+  color: var(--ramp-grey-10);
+}
+
+.rampAdminGrid input:focus,
+.rampAdminSelect select:focus { outline: none; border-color: var(--ramp-grey-10); }
+.rampAdminSelect { max-width: 280px; }
+
+.rampAdminFieldset { margin: 16px 0 0; padding: 0; border: 0; }
+.rampAdminFieldset legend { padding: 0; font-size: 12px; line-height: 16px; color: var(--ramp-grey-42); }
+.rampAdminChecks { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; margin-top: 8px; }
+
+.rampAdminCheck {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--ramp-line);
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 300;
+  cursor: pointer;
+}
+
+.rampAdminCheck--on { border-color: var(--ramp-grey-10); background: var(--ramp-grey-95); }
+.rampAdminCheck small { margin-left: auto; color: var(--ramp-grey-42); }
+.rampAdminCheck em { font-style: normal; font-size: 11px; color: var(--ramp-grey-42); }
+
+.rampAdminRadio { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
+
+.rampAdminTable { width: 100%; border-collapse: collapse; font-size: 14px; font-weight: 300; }
+.rampAdminTable th, .rampAdminTable td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--ramp-line); }
+.rampAdminTable th { font-weight: 400; color: var(--ramp-grey-42); font-size: 12px; }
+
+@media (max-width: 760px) {
+  .rampAdmin { padding: 24px; }
+}

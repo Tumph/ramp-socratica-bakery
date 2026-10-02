@@ -1,0 +1,854 @@
+/* ===================================================================
+   Socratica Store — its own identity, separate from the bakery
+   storefront and the Ramp simulator.
+   Tokens from nodes 2:68581 and 128:3191.
+   =================================================================== */
+
+@font-face {
+  font-family: "5by7";
+  src: url("/store/fonts/5by7-regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "5by7";
+  src: url("/store/fonts/5by7-bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Untitled Sans";
+  src: url("/store/fonts/UntitledSans-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Untitled Sans";
+  src: url("/store/fonts/UntitledSans-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-display: swap;
+}
+
+:root {
+  --store-ink: #131313;
+  --store-body: #41403f;
+  --store-mute: #a09d98;
+  --store-dark: #2a2928;
+  --store-cream: #f5f1e2;
+  --store-line: rgba(207, 204, 196, 0.32);
+  --store-blue: #2c64b7;
+  --store-blue-soft: rgba(188, 209, 241, 0.32);
+  --store-blue-line: #e8ecf2;
+}
+
+/* ===================================================================
+   Type scale — the only font pairings the store uses.
+   Every rule below references one of these; no ad-hoc sizes.
+   `font` shorthand is weight / size / line-height / family.
+   =================================================================== */
+
+:root {
+  /* 5by7 — display and chrome */
+  --t-display: 700 30px/1.4 "5by7", monospace;
+  --t-card: 700 18px/1.4 "5by7", monospace;
+  --t-pixel-label: 400 16px/1 "5by7", monospace;
+  --t-chip: 700 10px/0.7 "5by7", monospace;
+
+  /* Untitled Sans — everything else */
+  --t-emphasis: 500 20px/1.4 "Untitled Sans", sans-serif;
+  --t-title: 500 18px/1.4 "Untitled Sans", sans-serif;
+  --t-label: 500 16px/1.4 "Untitled Sans", sans-serif;
+  --t-body: 400 16px/1.4 "Untitled Sans", sans-serif;
+  --t-small: 400 14px/1.4 "Untitled Sans", sans-serif;
+  --t-small-strong: 500 14px/1.4 "Untitled Sans", sans-serif;
+  --t-caption: 400 12px/1.4 "Untitled Sans", sans-serif;
+  --t-pixel-caption: 700 12px/1.4 "5by7", monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #fff;
+  color: var(--store-body);
+  font-family: "Untitled Sans", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.storePage { min-height: 100vh; }
+
+/* Header ----------------------------------------------------------- */
+
+/* Three equal-weight columns so the tagline is centred on the header, not
+   pushed around by the differing widths of the logo and the chips. */
+.storeHeader {
+  width: 1054px;
+  max-width: calc(100% - 48px);
+  margin: 56px auto 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+}
+
+.storeHeader > :last-child { justify-self: end; }
+
+.storeLogo { display: block; line-height: 0; }
+.storeLogo img { width: 15.57px; height: 16.09px; display: block; }
+
+.storeTagline {
+  font: var(--t-chip);
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--store-dark);
+  opacity: 0.6;
+}
+
+.storeRule { width: 1px; height: 8px; background: currentColor; display: inline-block; }
+
+.storeCart {
+  font: var(--t-chip);
+  padding: 8px;
+  background: var(--store-cream);
+  color: #000;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Page body -------------------------------------------------------- */
+
+.storeMain {
+  width: 1063px;
+  max-width: calc(100% - 48px);
+  margin: 0 auto;
+  padding: 131px 0 120px;
+}
+
+.storeIntro { display: flex; flex-direction: column; align-items: flex-start; }
+
+.storeHeading {
+  font: var(--t-display);
+  margin: 0 0 16px;
+  letter-spacing: -0.48px;
+  color: var(--store-ink);
+}
+
+.storeBody {
+  font: var(--t-body);
+  margin: 0;
+  max-width: 462px;
+  letter-spacing: -0.16px;
+  color: var(--store-body);
+}
+
+.storeButton {
+  font: var(--t-label);
+  margin-top: 24px;
+  padding: 14px 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--store-blue-line);
+  border-radius: 24px;
+  background: var(--store-blue-soft);
+  color: var(--store-blue);
+  letter-spacing: -0.32px;
+  text-decoration: none;
+  transition: background-color 140ms ease;
+}
+
+.storeButton:hover { background: rgba(188, 209, 241, 0.5); }
+
+/* How it works ----------------------------------------------------- */
+
+.storeSteps {
+  list-style: none;
+  margin: 60px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+
+.storeStep {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--store-line);
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fdfcf8;
+}
+
+.storeStepArt {
+  display: block;
+  aspect-ratio: 333 / 245;
+  overflow: hidden;
+}
+
+/* The export carries bleed below the frame, so anchor to the top and crop. */
+.storeStepArt img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: top; }
+
+.storeStepHead { display: flex; align-items: center; gap: 12px; margin: 22px 0 0; padding: 0 28px; }
+
+.storeStepNumber {
+  font: var(--t-label);
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--store-cream);
+  color: var(--store-body);
+}
+
+.storeStepTitle {
+  font: var(--t-title); letter-spacing: -0.36px; color: var(--store-ink); }
+
+.storeStepBody {
+  font: var(--t-body);
+  margin: 12px 0 0;
+  padding: 0 28px 28px;
+  max-width: 289px;
+  letter-spacing: -0.16px;
+  color: var(--store-body);
+}
+
+/* Market ----------------------------------------------------------- */
+
+.storeAreas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 40px; }
+
+.storeArea {
+  display: block;
+  padding: 12px;
+  border: 1px solid var(--store-line);
+  border-radius: 4px;
+  text-decoration: none;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.storeArea:hover { border-color: rgba(207, 204, 196, 0.8); background: rgba(245, 241, 226, 0.3); }
+
+.storeAreaHead { display: flex; align-items: center; gap: 2px; }
+.storeAreaName {
+  font: var(--t-title); letter-spacing: -0.36px; color: var(--store-body); }
+.storeCaret { width: 20px; height: 20px; display: block; }
+
+.storeAreaBlurb {
+  font: var(--t-body);
+  display: block;
+  margin-top: 8px;
+  letter-spacing: -0.16px;
+  color: var(--store-body);
+}
+
+.storeScene {
+  margin-top: 40px;
+  border: 1px solid var(--store-cream);
+  border-radius: 12px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(100, 154, 234, 0.32) 0%, rgba(184, 192, 190, 0.32) 100%),
+    linear-gradient(90deg, rgba(251, 248, 239, 0.24) 0%, rgba(251, 248, 239, 0.24) 100%);
+}
+
+.storeScene img { width: 100%; height: auto; display: block; }
+
+@media (max-width: 900px) {
+  .storeMain { padding-top: 72px; }
+  .storeSteps, .storeAreas { grid-template-columns: 1fr; }
+  .storeTagline { display: none; }
+}
+
+/* ===================================================================
+   Area (gallery) page — node 138:1214
+   =================================================================== */
+
+.storeChips { display: flex; align-items: center; justify-content: flex-end; gap: 16px; }
+
+.shopMain { padding-top: 85px; width: 1021px; }
+
+.shopHeading h1 {
+  font: var(--t-display);
+  margin: 0;
+  letter-spacing: -0.48px;
+  color: var(--store-ink);
+  text-transform: uppercase;
+}
+
+.shopHeading p {
+  font: var(--t-body); margin: 8px 0 0; letter-spacing: -0.16px; color: var(--store-body); }
+
+/* Pay a visit to ---------------------------------------------------- */
+
+.shopVisit { display: flex; align-items: center; gap: 16px; margin-top: 35px; }
+
+.shopVisitLabel {
+  font: var(--t-pixel-label);
+  letter-spacing: -0.16px;
+  color: var(--store-body);
+  text-transform: uppercase;
+}
+
+.shopPill {
+  font: var(--t-label);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 82.3px;
+  padding: 12.389px 15.929px 12.389px 14.159px;
+  border-radius: 24px;
+  letter-spacing: -0.2832px;
+  text-decoration: none;
+  transition: filter 140ms ease;
+}
+
+.shopPill:hover { filter: brightness(0.96); }
+.shopPill--lilac { background: rgba(223, 212, 255, 0.7); color: #554f79; }
+.shopPill--peach { background: rgba(255, 135, 82, 0.5); color: #b52506; }
+.shopPill--mint { background: rgba(186, 233, 205, 0.6); color: #1f5c3a; }
+
+/* Product grid ------------------------------------------------------ */
+
+.shopGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32.54px;
+  margin-top: 29px;
+}
+
+.shopCard { display: flex; flex-direction: column; }
+
+.shopCardArt {
+  display: block;
+  width: 100%;
+  aspect-ratio: 317.304 / 242.046;
+  padding: 0;
+  border: 1.017px solid var(--store-cream);
+  border-radius: 12.204px 12.204px 0 0;
+  background: linear-gradient(180deg, rgba(251, 248, 239, 0.92) 53.365%, rgba(188, 209, 241, 0.51) 100%);
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+}
+
+.shopCardArt img {
+  position: absolute;
+  left: 25.32%;
+  top: 17.65%;
+  width: 48.4%;
+  height: 63.45%;
+  object-fit: contain;
+  transition: transform 160ms ease;
+}
+
+.shopCardArt:hover img { transform: scale(1.04); }
+
+.shopCardInfo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14.238px 17.289px;
+  background: #fff;
+  border: 1.017px solid var(--store-cream);
+  border-top: 0;
+  border-radius: 0 0 12.204px 12.204px;
+}
+
+.shopCardText { display: flex; flex-direction: column; gap: 2.034px; min-width: 0; }
+
+.shopCardName {
+  font: var(--t-card);
+  margin: 0;
+  letter-spacing: -0.2766px;
+  color: var(--store-ink);
+}
+
+.shopCardDesc {
+  font: var(--t-caption);
+  margin: 0;
+  max-height: 23.391px;
+  overflow: hidden;
+  letter-spacing: -0.0814px;
+  color: var(--store-body);
+}
+
+.shopPrice {
+  font: var(--t-small);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 27.283px;
+  padding: 9.023px 11.601px 9.023px 10.312px;
+  border: 0;
+  border-radius: 15.468px;
+  background: #f4f0fa;
+  color: #0e0747;
+  font: inherit;
+  letter-spacing: -0.2578px;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.shopPrice:hover { background: #ece5f7; }
+
+/* Cart dock --------------------------------------------------------- */
+
+.shopDock {
+  position: sticky;
+  bottom: 0;
+  margin-top: 64px;
+  padding: 24px 0 32px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #fff 38%);
+}
+
+.shopDockItems {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  width: 1021px;
+  max-width: calc(100% - 48px);
+  display: flex;
+  align-items: flex-end;
+  gap: 11px;
+}
+
+.shopDockItem { position: relative; height: 133px; }
+
+.shopDockLabel {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 49px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border-radius: 8px;
+  background: rgba(245, 241, 226, 0.9);
+  opacity: 0;
+  transition: opacity 140ms ease;
+  pointer-events: none;
+}
+
+.shopDockItem:hover .shopDockLabel { opacity: 1; }
+
+.shopDockQty {
+  font: var(--t-pixel-caption);
+  color: var(--store-ink);
+}
+
+.shopDockName {
+  font: var(--t-pixel-caption);
+  text-align: center;
+  color: var(--store-body);
+}
+
+.shopDockStack {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 75px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.shopDockStack img { position: absolute; bottom: 0; width: 75px; height: 75px; object-fit: contain; }
+
+@media (max-width: 1100px) {
+  .shopMain { width: auto; }
+  .shopGrid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+}
+
+/* ===================================================================
+   Product detail — node 76:1380
+   =================================================================== */
+
+/* The detail layout is 1049px in the design, wider than the 1021px grid. */
+.shopMain--wide { width: 1049px; }
+.shopDetail { width: 100%; }
+
+.shopBack {
+  font: var(--t-label);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 101px;
+  padding: 14px 18px 14px 16px;
+  border-radius: 24px;
+  background: #eaf0fb;
+  color: var(--store-dark);
+  letter-spacing: -0.32px;
+  text-decoration: none;
+  transition: background-color 140ms ease;
+}
+
+.shopBack:hover { background: #dfe8f8; }
+
+.shopDetailGrid {
+  display: grid;
+  grid-template-columns: 432px minmax(0, 520px);
+  justify-content: space-between;
+  gap: 97px;
+  margin-top: 62px;
+}
+
+.shopDetailInfo { display: flex; flex-direction: column; justify-content: space-between; }
+.shopDetailTop { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; max-width: 315px; }
+
+.shopDetailName {
+  font: var(--t-display);
+  margin: 0;
+  letter-spacing: -0.48px;
+  color: var(--store-ink);
+}
+
+.shopDetailDesc {
+  font: var(--t-body); margin: -4px 0 0; letter-spacing: -0.16px; color: var(--store-body); }
+
+.shopDetailPrice {
+  font: var(--t-emphasis);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 18px 14px 16px;
+  border-radius: 24px;
+  background: #f4f0fa;
+  color: #0e0747;
+  letter-spacing: -0.4px;
+}
+
+.shopDetailActions { display: flex; flex-direction: column; gap: 24px; width: 432px; max-width: 100%; margin-top: 123px; }
+
+.shopQuantityRow { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.shopQuantityLabel {
+  font: var(--t-title); margin: 0; letter-spacing: -0.36px; color: var(--store-body); }
+.shopQuantityLimit {
+  font: var(--t-body); margin: 8px 0 0; letter-spacing: -0.16px; color: var(--store-body); }
+
+.shopStepper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 18px 14px 16px;
+  border: 1.5px solid #e3e0de;
+  border-radius: 24px;
+}
+
+.shopStepper button {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.shopStepper button:disabled { opacity: 0.35; cursor: not-allowed; }
+.shopStepper img { width: 16px; height: 16px; display: block; }
+.shopStepper output {
+  font: var(--t-label); letter-spacing: -0.32px; color: #0e0747; min-width: 10px; text-align: center; }
+
+.shopAddToCart {
+  font: var(--t-label);
+  margin-top: 24px;
+  width: 100%;
+  padding: 14px 18px 14px 16px;
+  border: 1px solid var(--store-blue-line);
+  border-radius: 24px;
+  background: var(--store-blue-soft);
+  color: var(--store-blue);
+  font: inherit;
+  letter-spacing: -0.32px;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.shopAddToCart:hover { background: rgba(188, 209, 241, 0.5); }
+
+.shopAllergens {
+  padding: 12px;
+  border-radius: 4px;
+  background: rgba(207, 204, 196, 0.24);
+  color: var(--store-body);
+}
+
+.shopAllergensTitle {
+  font: var(--t-small-strong); margin: 0; letter-spacing: -0.28px; }
+.shopAllergensBody {
+  font: var(--t-small); margin: 5px 0 0; letter-spacing: -0.14px; }
+
+.shopDetailArt {
+  height: 521px;
+  border: 1px solid var(--store-cream);
+  border-radius: 12px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(180deg, rgba(244, 177, 203, 0.32) 0%, rgba(233, 179, 74, 0.32) 100%),
+    linear-gradient(90deg, rgba(251, 248, 239, 0.24) 0%, rgba(251, 248, 239, 0.24) 100%);
+}
+
+.shopDetailArt img { width: 60%; height: auto; object-fit: contain; }
+
+@media (max-width: 1100px) {
+  .shopDetail { width: auto; }
+  .shopDetailGrid { grid-template-columns: 1fr; gap: 40px; }
+  .shopDetailActions { margin-top: 40px; width: 100%; }
+  .shopDetailArt { height: 360px; }
+}
+
+/* ===================================================================
+   Checkout — node 124:1797
+   =================================================================== */
+
+.checkoutMain { width: 1077px; padding-top: 87px; }
+.checkout { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; }
+
+.storeDisplay {
+  font: var(--t-display);
+  margin: 0;
+  letter-spacing: -0.48px;
+  color: var(--store-ink);
+}
+
+.checkoutGrid {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-between;
+  gap: 174px;
+  width: 100%;
+}
+
+/* Dimensions scale with --c; type stays on the shared scale so the table
+   matches the rest of the store at any size. */
+.checkoutCart {
+  --c: var(--checkout-cart-scale, 0.85);
+  min-width: 0;
+}
+
+/* Shared column template keeps the headers aligned to the rows. */
+.checkoutHead,
+.checkoutLine {
+  display: grid;
+  grid-template-columns: calc(262px * var(--c)) calc(170px * var(--c)) 1fr;
+  align-items: center;
+  gap: calc(48px * var(--c));
+}
+
+.checkoutHead {
+  font: var(--t-body); margin-top: calc(36px * var(--c)); color: var(--store-dark); letter-spacing: -0.16px; text-transform: uppercase; }
+.checkoutHead span:first-child { padding-left: calc(163px * var(--c)); }
+
+.checkoutLines { list-style: none; margin: calc(23px * var(--c)) 0 0; padding: 0; }
+
+.checkoutLine { padding-bottom: calc(12px * var(--c)); border-bottom: 1px solid #e3e0de; }
+.checkoutLine + .checkoutLine { margin-top: calc(23px * var(--c)); }
+
+.checkoutItem { display: flex; align-items: center; gap: calc(88px * var(--c)); }
+
+.checkoutThumb {
+  width: calc(75px * var(--c));
+  height: calc(75px * var(--c));
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* Scoped so the product detail page's stepper keeps its full size. */
+.checkoutCart .shopStepper {
+  gap: calc(12px * var(--c));
+  padding: calc(14px * var(--c)) calc(18px * var(--c)) calc(14px * var(--c)) calc(16px * var(--c));
+}
+
+.checkoutCart .shopStepper button,
+.checkoutCart .shopStepper img { width: calc(16px * var(--c)); height: calc(16px * var(--c)); }
+.checkoutName {
+  font: var(--t-body); letter-spacing: -0.16px; color: var(--store-dark); white-space: nowrap; }
+.checkoutQty { display: flex; }
+.checkoutPrice {
+  font: var(--t-body); letter-spacing: -0.16px; color: var(--store-dark); }
+
+.checkoutEmpty {
+  font: var(--t-body); margin: 36px 0 0; color: var(--store-body); }
+
+/* Summary ----------------------------------------------------------- */
+
+/* Every dimension below is the design value times --s, so width and height
+   scale together and the text stays crisp (a transform would blur it). */
+.checkoutSummary {
+  --s: var(--checkout-summary-scale, 0.85);
+  width: calc(321px * var(--s));
+}
+
+.checkoutTotals { margin: calc(64px * var(--s)) 0 0; }
+
+.checkoutSubtotal,
+.checkoutTotal { display: flex; align-items: center; justify-content: space-between; }
+
+.checkoutSubtotal { padding-bottom: calc(13px * var(--s)); border-bottom: 1px solid #e3e0de; }
+
+.checkoutSubtotal dt, .checkoutSubtotal dd {
+  margin: 0;
+  font: var(--t-body);
+  letter-spacing: -0.256px;
+  color: #000;
+}
+
+.checkoutTotal { margin-top: calc(17px * var(--s)); }
+
+.checkoutTotal dt, .checkoutTotal dd {
+  margin: 0;
+  font: var(--t-emphasis);
+  letter-spacing: -0.32px;
+  color: #000;
+}
+
+.checkoutRamp {
+  margin-top: calc(40px * var(--s));
+  width: 100%;
+  padding: calc(20px * var(--s)) calc(18px * var(--s)) calc(20px * var(--s)) calc(16px * var(--s));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: #e4f222;
+  cursor: pointer;
+  transition: filter 140ms ease;
+}
+
+.checkoutRamp:hover:not(:disabled) { filter: brightness(0.95); }
+.checkoutRamp:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.checkoutRampMark {
+  position: relative;
+  display: block;
+  width: calc(90px * var(--s));
+  height: calc(24.18px * var(--s));
+}
+
+.checkoutRampMark img { position: absolute; display: block; }
+
+.checkoutRampMark img:first-child {
+  left: 0; bottom: 0;
+  width: calc(59.31px * var(--s));
+  height: calc(19.03px * var(--s));
+}
+
+.checkoutRampMark img:last-child {
+  right: 0; top: 0;
+  width: calc(22.2px * var(--s));
+  height: calc(19.03px * var(--s));
+}
+
+.checkoutAltPay {
+  display: block;
+  width: 100%;
+  margin-top: calc(21px * var(--s));
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #3d3d3d;
+  font: var(--t-caption);
+  letter-spacing: -0.24px;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-position: from-font;
+  cursor: pointer;
+}
+
+a.storeCart { text-decoration: none; transition: filter 140ms ease; }
+a.storeCart:hover { filter: brightness(0.95); }
+
+@media (max-width: 1100px) {
+  .checkoutMain { width: auto; }
+  .checkoutGrid { grid-template-columns: 1fr; gap: 48px; }
+  .checkoutHead, .checkoutLine { grid-template-columns: 1fr auto auto; gap: 16px; }
+  .checkoutHead span:first-child { padding-left: 0; }
+  .checkoutItem { gap: 16px; }
+  .checkoutSummary { width: 100%; }
+}
+
+/* Dev-only summary scale slider ------------------------------------- */
+
+.storeTuner {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 60;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #1a1919;
+  color: #fff;
+  font-size: 11px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.storeTuner label { display: grid; grid-template-columns: 90px 130px 36px; gap: 8px; align-items: center; margin-bottom: 4px; }
+.storeTuner output { text-align: right; color: #e4f222; }
+.storeTunerFoot { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.storeTunerFoot code { flex: 1; font-size: 10px; color: #b9b4b1; white-space: nowrap; }
+
+.storeTunerFoot button {
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.storeTunerFoot button:hover { background: rgba(255, 255, 255, 0.28); }
+
+/* ===================================================================
+   Receipt — node 138:1340
+   =================================================================== */
+
+.receiptMain { width: 356px; padding-top: 265px; }
+.receipt { display: flex; flex-direction: column; gap: 23px; padding: 10px; }
+.receiptText { display: flex; flex-direction: column; gap: 27px; }
+.receiptBody { font: var(--t-body); margin: 0; letter-spacing: -0.16px; color: var(--store-body); }
+
+.receiptFoot { display: flex; flex-direction: column; gap: 63px; }
+
+.receiptItems { list-style: none; display: flex; align-items: center; gap: 37px; margin: 0; padding: 0; }
+.receiptItems img { width: 56px; height: 56px; display: block; object-fit: contain; }
+
+.receiptBack {
+  font: var(--t-label);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 14px 18px 14px 16px;
+  border-radius: 24px;
+  background: #eaf0fb;
+  color: var(--store-dark);
+  letter-spacing: -0.32px;
+  text-decoration: none;
+  transition: background-color 140ms ease;
+}
+
+.receiptBack:hover { background: #dfe8f8; }
+
+@media (max-width: 760px) {
+  .receiptMain { width: auto; padding-top: 120px; }
+}
