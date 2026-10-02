@@ -7,10 +7,10 @@ export default function AuthCallbackPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const supabase = createBrowserSupabaseClient();
     let active = true;
 
     async function finishSignIn() {
+      const supabase = await createBrowserSupabaseClient();
       const hash = new URLSearchParams(window.location.hash.slice(1));
       const accessToken = hash.get("access_token");
       const refreshToken = hash.get("refresh_token");
@@ -35,7 +35,7 @@ export default function AuthCallbackPage() {
           return;
         }
       }
-      window.location.replace("/");
+      window.location.replace("/ramp");
     }
 
     void finishSignIn();
