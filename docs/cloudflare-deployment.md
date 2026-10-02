@@ -17,10 +17,11 @@ repository uses `cloudflare.config.ts`.
 
 ## Required Cloudflare configuration
 
-- The Worker needs `NEXT_PUBLIC_SUPABASE_URL` and
-  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` as non-secret runtime bindings.
-- `SUPABASE_SECRET_KEY` must be a Worker secret. Never commit it, put it in
-  `cloudflare.config.ts`, or expose it to the browser.
+- The Worker declares `NEXT_PUBLIC_SUPABASE_URL`,
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SECRET_KEY` as named
+  secret bindings. Store their values in the Worker, never in
+  `cloudflare.config.ts` or the repository. The two `NEXT_PUBLIC_*` values are
+  safe for client code when intentionally exposed; the service key never is.
 - The Supabase Auth redirect allow-list must include
   `https://dough.socratica.info/auth/callback*` before production invitation
   links are sent.
