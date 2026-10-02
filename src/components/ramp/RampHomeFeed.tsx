@@ -46,6 +46,10 @@ export function RampHomeFeed({ data }: { data: HomeData }) {
         {greetingFor()}, {viewer.firstName}
       </h1>
 
+      <a className="rampBtn rampBtn--primary rampSubmissionLink" href="/submission/index.html">
+        Submit your build ↗
+      </a>
+
       {notices.map((notice) => (
         <RampNotice key={notice.id} notice={notice} />
       ))}

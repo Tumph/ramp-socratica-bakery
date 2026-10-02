@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#281c27">
+  <meta name="description" content="Submit your Socratica x Ramp Buildathon project for Grandma’s Bakeria.">
+  <title>Grandma’s Bakeria — Submit your build</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght,SOFT,WONK@9..144,600,50,1;9..144,700,50,1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=4">
+  <script src="config.js" defer></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <main class="page"><section class="submission" aria-labelledby="form-title">
+      <div class="submission-intro"><div class="intro-copy"><h1 id="form-title">Show Grandma <em>what you built.</em></h1><p>One project, one delivery slip. Share your link and how your idea helps the bakery. Ramp engineers will take it from there.</p></div><div class="baking-icons" aria-hidden="true"><img src="pastries.svg" alt=""><img src="parfait.svg" alt=""><img src="croissant.svg" alt=""></div></div>
+      <div class="form-card">
+        <div class="form-card-top"><span>PROJECT DELIVERY SLIP</span><span>✳ 001</span></div>
+        <form id="submission-form" novalidate>
+          <div class="form-section-label"><span>01</span> THE PEOPLE</div>
+          <div class="field-row two"><div class="field"><label for="teamName">Team name <span>*</span></label><input id="teamName" name="teamName" autocomplete="organization" maxlength="80" required placeholder="e.g. The Dough Crew"><small class="field-error" id="teamName-error"></small></div><div class="field"><label for="teamMembers">Team members <span>*</span></label><input id="teamMembers" name="teamMembers" maxlength="300" required placeholder="First names, separated by commas"><small class="field-error" id="teamMembers-error"></small></div></div>
+          <div class="field-row two"><div class="field"><label for="contactEmail">Contact email <span>*</span></label><input id="contactEmail" name="contactEmail" type="email" autocomplete="email" maxlength="254" required placeholder="you@example.com"><small class="field-error" id="contactEmail-error"></small></div><div class="field"><label for="projectName">Project name <span>*</span></label><input id="projectName" name="projectName" maxlength="100" required placeholder="Give your build a name"><small class="field-error" id="projectName-error"></small></div></div>
+
+          <div class="form-section-label"><span>02</span> THE BUILD</div>
+          <div class="field field-projectUrl"><label for="projectUrl">Project link <span>*</span></label><input id="projectUrl" name="projectUrl" type="url" inputmode="url" maxlength="1000" required placeholder="https://your-project-link.com"><small class="field-error" id="projectUrl-error"></small></div>
+          <div class="field field-problem"><label for="problem">What problem did you notice? <span>*</span></label><textarea id="problem" name="problem" rows="2" maxlength="700" required placeholder="What was slowing Grandma down?"></textarea><small class="field-error" id="problem-error"></small></div>
+          <div class="field field-solution"><label for="solution">What did you build? <span>*</span></label><textarea id="solution" name="solution" rows="2" maxlength="700" required placeholder="Explain it so Grandma would understand."></textarea><small class="field-error" id="solution-error"></small></div>
+
+          <div class="form-section-label"><span>03</span> THE DIFFERENCE</div>
+          <div class="field field-impact"><label for="impact">How does it save time or money? <span>*</span></label><textarea id="impact" name="impact" rows="2" maxlength="700" required placeholder="A specific example or thoughtful estimate is perfect."></textarea><small class="field-error" id="impact-error"></small></div>
+          <div class="field field-estimate"><label for="estimate">How did you estimate that? <span class="optional">OPTIONAL</span></label><textarea id="estimate" name="estimate" rows="2" maxlength="500" placeholder="Walk us through your assumptions."></textarea><small class="field-error" id="estimate-error"></small></div>
+
+          <div id="form-status" class="form-status" role="status" aria-live="polite" hidden></div>
+          <div class="form-actions"><button id="submit-button" type="submit"><span class="button-label">Hand it to Grandma</span><span class="button-arrow" aria-hidden="true">↗</span></button><p>By submitting, you’re sharing this project with the Buildathon organizers and Ramp judges.</p></div>
+        </form>
+        <div class="success-panel" id="success-panel" hidden tabindex="-1"><div class="success-mark" aria-hidden="true">✳</div><div class="section-index">DELIVERY SENT</div><h3>Grandma got<br>your build!</h3><p>Your answers were sent to the submission form.</p><p class="success-caveat">If the Google Form requires sign-in or rejects responses, the browser cannot confirm that here. Ask an organizer to check the responses if you’re unsure.</p><button type="button" id="submit-another">Submit another project ↗</button></div>
+      </div>
+    </section></main>
+  <iframe id="google-form-frame" name="google-form-frame" title="Google Form submission receiver" hidden></iframe>
+</body>
+</html>

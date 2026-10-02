@@ -1,0 +1,40 @@
+@font-face{font-family:Gocake;src:url('Gocake.otf') format('opentype');font-display:swap}
+:root{--ink:#281c27;--cream:#f2e9d8;--paper:#fffaf0;--orange:#ff784f;--lime:#d7ec78;--line:#d8cabb;--display:Gocake,Georgia,serif;--body:'DM Sans',sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--body)}
+button,input,select,textarea{font:inherit}
+.grain{position:fixed;inset:0;z-index:10;pointer-events:none;opacity:.12;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E")}
+.form-card-top,.form-section-label{font-size:11px;letter-spacing:.14em;font-weight:700}
+.page{padding:clamp(18px,2.5vw,34px) clamp(16px,3vw,52px) 35px}
+.submission{max-width:1500px;margin:0 auto}
+.submission-intro{display:flex;align-items:center;justify-content:space-between;gap:30px;margin-bottom:16px}
+h1,h2,h3,p{margin-top:0}
+.submission h1{font:400 clamp(45px,5.3vw,78px)/.95 var(--display);letter-spacing:0;margin:0 0 9px}
+.submission h1 em{font-style:normal;color:#e96c4d}
+.submission-intro p{max-width:650px;margin:0;font-size:14px;line-height:1.5;color:#554944}
+.baking-icons{display:flex;align-items:center;justify-content:flex-end;flex:none;width:270px;height:130px;pointer-events:none}
+.baking-icons img{display:block;width:106px;height:106px;object-fit:contain;filter:drop-shadow(2px 4px 0 #281c2720)}
+.baking-icons img:nth-child(1){transform:rotate(-13deg)}.baking-icons img:nth-child(2){margin-left:-33px;transform:rotate(10deg) translateY(-6px)}.baking-icons img:nth-child(3){margin-left:-29px;transform:rotate(17deg) translateY(9px)}
+.form-card{background:var(--paper);border:1px solid #cbbbad;box-shadow:7px 7px 0 #d8cbb9}
+.form-card-top{display:flex;justify-content:space-between;background:var(--lime);padding:12px 24px;border-bottom:1px solid var(--ink)}
+#submission-form{padding:15px 24px 21px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:13px 17px}
+#submission-form>.form-section-label,#submission-form>.form-status,#submission-form>.form-actions{grid-column:1/-1}
+.form-section-label{display:flex;align-items:center;gap:10px;margin:0;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.form-section-label:not(:first-child){margin-top:5px}
+.form-section-label span{display:grid;place-items:center;width:25px;height:25px;border:1px solid var(--ink);border-radius:50%;font-size:10px}
+.field-row.two{grid-column:span 6;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+#submission-form>.field-projectUrl{grid-column:1/-1}
+#submission-form>.field-problem,#submission-form>.field-solution,#submission-form>.field-impact,#submission-form>.field-estimate{grid-column:span 6}
+.field{min-width:0}.field label{display:block;font-size:12px;font-weight:700;margin-bottom:6px}.field label span{color:#d75235}.field label .optional{font-size:9px;letter-spacing:.1em;color:#95887f;margin-left:5px}
+.field input,.field select,.field textarea{display:block;width:100%;border:1px solid #c8b8aa;background:#fffdf7;border-radius:2px;color:var(--ink);outline:none;padding:10px 12px;transition:border .18s,box-shadow .18s}
+.field input,.field select{height:42px}.field textarea{min-height:68px;resize:vertical}.field input::placeholder,.field textarea::placeholder{color:#9b8d83}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#ab5a43;box-shadow:0 0 0 3px #ff784f30}.field [aria-invalid=true]{border-color:#c53d2b;background:#fff8f4}
+.field-error{display:block;color:#a83426;font-size:11px;font-weight:700;margin-top:5px}.field-error:empty{display:none}
+.form-actions{border-top:1px solid var(--line);padding-top:16px;display:flex;align-items:center;justify-content:space-between;gap:24px}.form-actions p{font-size:11px;line-height:1.45;color:#756b64;margin:0;max-width:420px}
+.form-actions button{min-width:270px;border:1px solid var(--ink);background:var(--ink);color:var(--cream);padding:13px 17px;display:flex;justify-content:space-between;align-items:center;gap:20px;font-weight:700;cursor:pointer;transition:background .2s,transform .2s}.form-actions button:hover:not(:disabled){background:#503442;transform:translateY(-2px)}.form-actions button:disabled{opacity:.68;cursor:wait}.button-arrow{font-size:21px}
+.form-status{padding:12px 14px;font-size:13px;line-height:1.5;border:1px solid}.form-status.error{background:#fff0e9;color:#862e21;border-color:#e3a492}.form-status.loading{background:#f0f1d6;color:#3b4522;border-color:#bdc993}
+.success-panel{padding:60px 24px;text-align:center}.success-mark{font-size:74px;color:var(--orange);line-height:1}.success-panel .section-index{color:#8e5547;font-size:11px;letter-spacing:.14em;font-weight:700;margin-top:10px}.success-panel h3{font:700 clamp(38px,5vw,60px)/1.05 var(--display);letter-spacing:-.06em;margin:18px 0}.success-panel p{max-width:500px;margin:0 auto 12px;line-height:1.6}.success-caveat{font-size:12px;color:#6e625e}.success-panel button{background:var(--lime);border:1px solid var(--ink);padding:13px 17px;margin-top:13px;font-weight:700;cursor:pointer}
+@media(max-width:1050px){.field-row.two{grid-column:1/-1}.baking-icons{width:205px}.baking-icons img{width:86px;height:86px}}
+@media(max-width:700px){.submission-intro{align-items:flex-start}.submission h1{font-size:clamp(42px,8vw,62px)}.baking-icons{width:95px;height:95px;position:relative}.baking-icons img{position:absolute;width:65px;height:65px}.baking-icons img:nth-child(1){left:0;top:0}.baking-icons img:nth-child(2){right:0;top:14px;margin:0}.baking-icons img:nth-child(3){left:12px;bottom:0;margin:0}.form-actions{align-items:stretch;flex-direction:column}.form-actions button{width:100%}}
+@media(max-width:520px){.page{padding:20px 14px 28px}.submission h1{font-size:clamp(40px,11vw,52px)}.submission-intro{gap:8px}.submission-intro p{font-size:13px}.baking-icons{width:76px;height:80px}.baking-icons img{width:56px;height:56px}.form-card-top{padding:11px 16px}#submission-form{padding:11px 16px 18px;gap:13px}.field-row.two{display:block}.field-row.two .field+.field{margin-top:13px}#submission-form>.field{grid-column:1/-1}.form-section-label:not(:first-child){margin-top:7px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
